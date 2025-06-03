@@ -4,7 +4,8 @@
   "type": "library",
   "license": "MIT",
   "require": {
-    "php": "^8.1"
+    "php": "^8.1",
+    "ext-hash": "*"
   },
   "require-dev": {
     "phpstan/phpstan": "^2.1",
