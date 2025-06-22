@@ -40,11 +40,9 @@ class PacketDecoder
         }
 
         // 首先检查是否是版本协商包（版本为 0x00000000）
-        if (strlen($data) >= 5) {
-            $version = unpack('N', substr($data, 1, 4))[1];
-            if ($version === 0x00000000) {
-                return VersionNegotiationPacket::decode($data);
-            }
+        $version = unpack('N', substr($data, 1, 4))[1];
+        if ($version === 0x00000000) {
+            return VersionNegotiationPacket::decode($data);
         }
 
         $firstByte = ord($data[0]);
@@ -118,7 +116,6 @@ class PacketDecoder
                 1 => PacketType::ZERO_RTT,
                 2 => PacketType::HANDSHAKE,
                 3 => PacketType::RETRY,
-                default => null,
             };
         } else {
             // 短包头包
@@ -150,12 +147,10 @@ class PacketDecoder
             }
 
             // 检查版本协商包
-            if (strlen($data) >= 5) {
-                $version = unpack('N', substr($data, 1, 4))[1];
-                if ($version === 0x00000000) {
-                    // 版本协商包至少需要7字节
-                    return strlen($data) >= 7;
-                }
+            $version = unpack('N', substr($data, 1, 4))[1];
+            if ($version === 0x00000000) {
+                // 版本协商包至少需要7字节
+                return strlen($data) >= 7;
             }
 
             return true;

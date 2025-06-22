@@ -96,7 +96,7 @@ class StatelessResetPacket extends Packet
         // 随机数据是除了第一字节和最后16字节之外的所有数据
         $randomData = substr($data, 1, -16);
 
-        return new self($statelessResetToken, $randomData);
+        return new static($statelessResetToken, $randomData);
     }
 
     /**
@@ -121,12 +121,12 @@ class StatelessResetPacket extends Packet
     /**
      * 创建具有指定最小长度的无状态重置包
      */
-    public static function createWithMinLength(string $statelessResetToken, int $minLength = 22): self
+    public static function createWithMinLength(string $statelessResetToken, int $minLength = 22): static
     {
         $randomDataLength = max(0, $minLength - 17); // 减去第一字节和16字节令牌
         $randomData = random_bytes($randomDataLength);
         
-        return new self($statelessResetToken, $randomData);
+        return new static($statelessResetToken, $randomData);
     }
 
     /**

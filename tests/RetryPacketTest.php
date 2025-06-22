@@ -114,11 +114,11 @@ class RetryPacketTest extends TestCase
         // 这个测试主要验证方法存在并可以调用
         // 由于我们使用简化实现，这里主要测试方法是否可用
         $result = $packet->validateIntegrityTag($originalDestConnectionId);
-        $this->assertIsBool($result);
+        $this->assertFalse($result); // 简化实现应该返回 false
 
         // 测试不同的原始连接ID应该产生不同的结果
         $result2 = $packet->validateIntegrityTag('different_original_id');
-        $this->assertIsBool($result2);
+        $this->assertFalse($result2); // 简化实现应该返回 false
     }
 
     public function testDecodeInvalidRetryPacket(): void

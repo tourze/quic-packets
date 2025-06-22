@@ -113,7 +113,7 @@ class ShortHeaderPacket extends Packet
         // 负载
         $payload = substr($data, $offset);
 
-        return new self($destinationConnectionId, $packetNumber, $payload, $keyPhase);
+        return new static($destinationConnectionId, $packetNumber, $payload, $keyPhase);
     }
 
     /**

@@ -158,6 +158,6 @@ class PacketNumberSpaceTest extends TestCase
         
         // 验证数据结构仍然有效
         $stats = $this->space->getStats();
-        $this->assertIsArray($stats);
+        $this->assertNotEmpty($stats);
     }
 } 

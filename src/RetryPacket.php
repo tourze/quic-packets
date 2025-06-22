@@ -106,7 +106,7 @@ class RetryPacket extends LongHeaderPacket
         // Retry Integrity Tag (16 bytes)
         $retryIntegrityTag = substr($data, $offset, 16);
 
-        return new self(
+        return new static(
             $headerInfo['version'],
             $headerInfo['destinationConnectionId'],
             $headerInfo['sourceConnectionId'],

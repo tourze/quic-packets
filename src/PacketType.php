@@ -4,13 +4,21 @@ declare(strict_types=1);
 
 namespace Tourze\QUIC\Packets;
 
+use Tourze\EnumExtra\Itemable;
+use Tourze\EnumExtra\ItemTrait;
+use Tourze\EnumExtra\Labelable;
+use Tourze\EnumExtra\Selectable;
+use Tourze\EnumExtra\SelectTrait;
+
 /**
  * QUIC 包类型枚举
  *
  * 根据 RFC 9000 定义的包类型
  */
-enum PacketType: int
+enum PacketType: int implements Labelable, Itemable, Selectable
 {
+    use ItemTrait;
+    use SelectTrait;
     // 长包头包类型
     case INITIAL = 0x00;
     case ZERO_RTT = 0x01;
@@ -60,5 +68,13 @@ enum PacketType: int
             self::ONE_RTT => '1-RTT',
             self::STATELESS_RESET => 'Stateless Reset',
         };
+    }
+
+    /**
+     * 获取标签（用于显示）
+     */
+    public function getLabel(): string
+    {
+        return $this->getName();
     }
 } 

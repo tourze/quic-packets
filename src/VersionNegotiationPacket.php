@@ -150,7 +150,7 @@ class VersionNegotiationPacket extends Packet
             throw new \InvalidArgumentException('版本协商包必须包含至少一个支持的版本');
         }
 
-        return new self(
+        return new static(
             $destinationConnectionId,
             $sourceConnectionId,
             $supportedVersions

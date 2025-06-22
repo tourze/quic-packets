@@ -100,7 +100,7 @@ class HandshakePacket extends LongHeaderPacket
         }
         $payload = substr($data, $offset, $payloadLength);
 
-        return new self(
+        return new static(
             $headerInfo['version'],
             $headerInfo['destinationConnectionId'],
             $headerInfo['sourceConnectionId'],
