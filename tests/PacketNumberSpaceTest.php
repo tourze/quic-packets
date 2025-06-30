@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tourze\QUIC\Packets\Tests;
 
 use PHPUnit\Framework\TestCase;
+use Tourze\QUIC\Packets\Exception\InvalidPacketNumberSpaceException;
 use Tourze\QUIC\Packets\PacketNumberSpace;
 use Tourze\QUIC\Packets\PacketType;
 
@@ -140,7 +141,7 @@ class PacketNumberSpaceTest extends TestCase
 
     public function testInvalidPacketNumberException(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(InvalidPacketNumberSpaceException::class);
         $this->space->recordReceived(-1);
     }
 

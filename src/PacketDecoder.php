@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Tourze\QUIC\Packets;
 
+use Tourze\QUIC\Packets\Exception\InvalidPacketDataException;
+use Tourze\QUIC\Packets\Exception\InvalidPacketTypeException;
+
 /**
  * QUIC 包解码器
  *
@@ -17,7 +20,7 @@ class PacketDecoder
     public function decode(string $data): Packet
     {
         if (empty($data)) {
-            throw new \InvalidArgumentException('数据不能为空');
+            throw new InvalidPacketDataException('数据不能为空');
         }
 
         $firstByte = ord($data[0]);
@@ -36,7 +39,7 @@ class PacketDecoder
     private function decodeLongHeaderPacket(string $data): Packet
     {
         if (strlen($data) < 6) {
-            throw new \InvalidArgumentException('长包头数据长度不足');
+            throw new InvalidPacketDataException('长包头数据长度不足');
         }
 
         // 首先检查是否是版本协商包（版本为 0x00000000）
@@ -53,7 +56,7 @@ class PacketDecoder
             PacketType::ZERO_RTT->value => ZeroRTTPacket::decode($data),
             PacketType::HANDSHAKE->value => HandshakePacket::decode($data),
             PacketType::RETRY->value => RetryPacket::decode($data),
-            default => throw new \InvalidArgumentException('未知的长包头包类型：' . $packetType),
+            default => throw new InvalidPacketTypeException('未知的长包头包类型：' . $packetType),
         };
     }
 

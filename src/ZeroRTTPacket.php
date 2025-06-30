@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Tourze\QUIC\Packets;
 
+use Tourze\QUIC\Packets\Exception\InvalidPacketDataException;
+use Tourze\QUIC\Packets\Exception\InvalidPacketTypeException;
+
 /**
  * 0-RTT 包
  *
@@ -77,7 +80,7 @@ class ZeroRTTPacket extends LongHeaderPacket
         $headerInfo = self::decodeLongHeader($data, $offset);
 
         if ($headerInfo['typeValue'] !== PacketType::ZERO_RTT->value) {
-            throw new \InvalidArgumentException('不是 0-RTT 包');
+            throw new InvalidPacketTypeException('不是 0-RTT 包');
         }
 
         // 解码 Length
@@ -89,7 +92,7 @@ class ZeroRTTPacket extends LongHeaderPacket
 
         // 解码包号
         if (strlen($data) < $offset + $packetNumberLength) {
-            throw new \InvalidArgumentException('数据长度不足以解码包号');
+            throw new InvalidPacketDataException('数据长度不足以解码包号');
         }
         $packetNumber = self::decodePacketNumber($data, $offset, $packetNumberLength);
         $offset += $packetNumberLength;
@@ -97,7 +100,7 @@ class ZeroRTTPacket extends LongHeaderPacket
         // 解码负载
         $payloadLength = $length - $packetNumberLength;
         if (strlen($data) < $offset + $payloadLength) {
-            throw new \InvalidArgumentException('数据长度不足以解码负载');
+            throw new InvalidPacketDataException('数据长度不足以解码负载');
         }
         $payload = substr($data, $offset, $payloadLength);
 

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tourze\QUIC\Packets\Tests;
 
 use PHPUnit\Framework\TestCase;
+use Tourze\QUIC\Packets\Exception\InvalidPacketDataException;
 use Tourze\QUIC\Packets\HandshakePacket;
 use Tourze\QUIC\Packets\InitialPacket;
 use Tourze\QUIC\Packets\PacketDecoder;
@@ -154,7 +155,7 @@ class PacketEncoderDecoderTest extends TestCase
 
     public function testInvalidPacketDecoding(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(InvalidPacketDataException::class);
         $this->decoder->decode('');
     }
 

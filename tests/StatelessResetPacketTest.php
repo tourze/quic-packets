@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tourze\QUIC\Packets\Tests;
 
 use PHPUnit\Framework\TestCase;
+use Tourze\QUIC\Packets\Exception\InvalidPacketDataException;
 use Tourze\QUIC\Packets\PacketType;
 use Tourze\QUIC\Packets\StatelessResetPacket;
 
@@ -44,7 +45,7 @@ class StatelessResetPacketTest extends TestCase
 
     public function testInvalidTokenLength(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(InvalidPacketDataException::class);
         $this->expectExceptionMessage('无状态重置令牌必须是16字节');
         
         new StatelessResetPacket('short_token');
@@ -79,7 +80,7 @@ class StatelessResetPacketTest extends TestCase
 
     public function testDecodeInvalidLength(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(InvalidPacketDataException::class);
         $this->expectExceptionMessage('无状态重置包长度不足（最少22字节）');
         
         StatelessResetPacket::decode('short');
@@ -87,7 +88,7 @@ class StatelessResetPacketTest extends TestCase
 
     public function testDecodeInvalidFixedBit(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(InvalidPacketDataException::class);
         $this->expectExceptionMessage('无状态重置包 Fixed Bit 必须为1');
         
         // 创建一个没有 Fixed Bit 的数据
@@ -97,7 +98,7 @@ class StatelessResetPacketTest extends TestCase
 
     public function testDecodeInvalidHeaderForm(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(InvalidPacketDataException::class);
         $this->expectExceptionMessage('无状态重置包 Header Form 必须为0');
         
         // 创建一个有 Fixed Bit (0x40) 但有长包头标志 (0x80) 的数据

@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Tourze\QUIC\Packets\Tests;
 
 use PHPUnit\Framework\TestCase;
+use Tourze\QUIC\Packets\Exception\InvalidPacketDataException;
+use Tourze\QUIC\Packets\Exception\InvalidPacketTypeException;
 use Tourze\QUIC\Packets\PacketType;
 use Tourze\QUIC\Packets\ZeroRTTPacket;
 
@@ -98,7 +100,7 @@ class ZeroRTTPacketTest extends TestCase
     public function testDecodeInvalidZeroRTTPacket(): void
     {
         // 测试错误的包类型
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(InvalidPacketTypeException::class);
         $this->expectExceptionMessage('不是 0-RTT 包');
 
         // 创建一个 Initial 包的数据，然后尝试用 ZeroRTTPacket 解码
@@ -108,7 +110,7 @@ class ZeroRTTPacketTest extends TestCase
 
     public function testDecodeInsufficientData(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(InvalidPacketDataException::class);
 
         // 数据长度不足
         $invalidData = "\xd0\x00\x00\x00\x01";

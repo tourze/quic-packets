@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Tourze\QUIC\Packets;
 
+use Tourze\QUIC\Packets\Exception\InvalidPacketDataException;
+
 /**
  * 无状态重置包
  *
@@ -17,7 +19,7 @@ class StatelessResetPacket extends Packet
         protected readonly string $randomData = '',
     ) {
         if (strlen($statelessResetToken) !== 16) {
-            throw new \InvalidArgumentException('无状态重置令牌必须是16字节');
+            throw new InvalidPacketDataException('无状态重置令牌必须是16字节');
         }
 
         parent::__construct(
@@ -75,19 +77,19 @@ class StatelessResetPacket extends Packet
     public static function decode(string $data): static
     {
         if (strlen($data) < 22) {
-            throw new \InvalidArgumentException('无状态重置包长度不足（最少22字节）');
+            throw new InvalidPacketDataException('无状态重置包长度不足（最少22字节）');
         }
 
         $firstByte = ord($data[0]);
 
         // 验证 Fixed Bit
         if (($firstByte & 0x40) === 0) {
-            throw new \InvalidArgumentException('无状态重置包 Fixed Bit 必须为1');
+            throw new InvalidPacketDataException('无状态重置包 Fixed Bit 必须为1');
         }
 
         // 验证 Header Form（应该为0，表示短包头）
         if (($firstByte & 0x80) !== 0) {
-            throw new \InvalidArgumentException('无状态重置包 Header Form 必须为0');
+            throw new InvalidPacketDataException('无状态重置包 Header Form 必须为0');
         }
 
         // 无状态重置令牌是最后16字节

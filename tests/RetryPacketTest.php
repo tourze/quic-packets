@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Tourze\QUIC\Packets\Tests;
 
 use PHPUnit\Framework\TestCase;
+use Tourze\QUIC\Packets\Exception\InvalidPacketDataException;
+use Tourze\QUIC\Packets\Exception\InvalidPacketTypeException;
 use Tourze\QUIC\Packets\PacketType;
 use Tourze\QUIC\Packets\RetryPacket;
 
@@ -123,7 +125,7 @@ class RetryPacketTest extends TestCase
 
     public function testDecodeInvalidRetryPacket(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(InvalidPacketTypeException::class);
         $this->expectExceptionMessage('不是 Retry 包');
 
         // 创建一个 Initial 包的数据，然后尝试用 RetryPacket 解码
@@ -133,7 +135,7 @@ class RetryPacketTest extends TestCase
 
     public function testDecodeRetryPacketWithInsufficientData(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(InvalidPacketDataException::class);
         $this->expectExceptionMessage('Retry 包长度不足，缺少 Integrity Tag');
 
         // Retry 包但没有足够的 Integrity Tag

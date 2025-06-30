@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Tourze\QUIC\Packets\Tests;
 
 use PHPUnit\Framework\TestCase;
+use Tourze\QUIC\Packets\Exception\InvalidPacketDataException;
+use Tourze\QUIC\Packets\Exception\InvalidPacketTypeException;
 use Tourze\QUIC\Packets\PacketType;
 use Tourze\QUIC\Packets\VersionNegotiationPacket;
 
@@ -84,7 +86,7 @@ class VersionNegotiationPacketTest extends TestCase
 
     public function testDecodeInvalidVersionNegotiationPacket(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(InvalidPacketDataException::class);
 
         // 数据长度不足
         $invalidData = "\x80\x00\x00";
@@ -93,7 +95,7 @@ class VersionNegotiationPacketTest extends TestCase
 
     public function testDecodeNonVersionNegotiationPacket(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(InvalidPacketTypeException::class);
         $this->expectExceptionMessage('不是版本协商包');
 
         // 版本不是 0x00000000

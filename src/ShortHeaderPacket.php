@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Tourze\QUIC\Packets;
 
+use Tourze\QUIC\Packets\Exception\InvalidPacketDataException;
+use Tourze\QUIC\Packets\Exception\InvalidPacketTypeException;
+
 /**
  * 短包头包（1-RTT包）
  *
@@ -75,18 +78,18 @@ class ShortHeaderPacket extends Packet
         $offset = 0;
 
         if (strlen($data) < 1) {
-            throw new \InvalidArgumentException('数据长度不足');
+            throw new InvalidPacketDataException('数据长度不足');
         }
 
         $firstByte = ord($data[$offset++]);
 
         // 验证包格式
         if (($firstByte & 0x80) !== 0) {
-            throw new \InvalidArgumentException('不是短包头包');
+            throw new InvalidPacketTypeException('不是短包头包');
         }
 
         if (($firstByte & 0x40) === 0) {
-            throw new \InvalidArgumentException('Fixed Bit 必须为1');
+            throw new InvalidPacketDataException('Fixed Bit 必须为1');
         }
 
         // 解析 Key Phase
@@ -98,14 +101,14 @@ class ShortHeaderPacket extends Packet
         // 目标连接ID（需要从连接上下文获取长度，这里假设为8字节）
         $connIdLength = 8; // 实际实现中需要从连接状态获取
         if (strlen($data) < $offset + $connIdLength) {
-            throw new \InvalidArgumentException('数据长度不足以解码连接ID');
+            throw new InvalidPacketDataException('数据长度不足以解码连接ID');
         }
         $destinationConnectionId = substr($data, $offset, $connIdLength);
         $offset += $connIdLength;
 
         // 解析包号
         if (strlen($data) < $offset + $packetNumberLength) {
-            throw new \InvalidArgumentException('数据长度不足以解码包号');
+            throw new InvalidPacketDataException('数据长度不足以解码包号');
         }
         $packetNumber = self::decodePacketNumber($data, $offset, $packetNumberLength);
         $offset += $packetNumberLength;

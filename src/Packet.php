@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Tourze\QUIC\Packets;
 
+use Tourze\QUIC\Packets\Exception\InvalidPacketDataException;
+
 /**
  * QUIC 包抽象基类
  *
@@ -72,10 +74,13 @@ abstract class Packet
         } elseif ($value < 1073741824) {
             return pack('N', $value | 0x80000000);
         } elseif ($value < 4611686018427387904) {
-            return pack('J', $value | 0xC000000000000000);
+            // 使用字符串拼接避免大整数位操作导致的浮点数转换
+            $bytes = pack('J', $value);
+            $bytes[0] = chr(ord($bytes[0]) | 0xC0);
+            return $bytes;
         }
 
-        throw new \InvalidArgumentException('变长整数值过大：' . $value);
+        throw new InvalidPacketDataException('变长整数值过大：' . $value);
     }
 
     /**
@@ -84,7 +89,7 @@ abstract class Packet
     protected static function decodeVariableInt(string $data, int $offset = 0): array
     {
         if (!isset($data[$offset])) {
-            throw new \InvalidArgumentException('数据不足以解码变长整数');
+            throw new InvalidPacketDataException('数据不足以解码变长整数');
         }
 
         $firstByte = ord($data[$offset]);
@@ -93,25 +98,25 @@ abstract class Packet
         return match ($prefix) {
             0 => [$firstByte & 0x3F, 1],
             1 => [
-                (($firstByte & 0x3F) << 8) | ord($data[$offset + 1] ?? throw new \InvalidArgumentException('数据不足')),
+                (($firstByte & 0x3F) << 8) | ord($data[$offset + 1] ?? throw new InvalidPacketDataException('数据不足')),
                 2
             ],
             2 => [
                 (($firstByte & 0x3F) << 24) |
-                (ord($data[$offset + 1] ?? throw new \InvalidArgumentException('数据不足')) << 16) |
-                (ord($data[$offset + 2] ?? throw new \InvalidArgumentException('数据不足')) << 8) |
-                ord($data[$offset + 3] ?? throw new \InvalidArgumentException('数据不足')),
+                (ord($data[$offset + 1] ?? throw new InvalidPacketDataException('数据不足')) << 16) |
+                (ord($data[$offset + 2] ?? throw new InvalidPacketDataException('数据不足')) << 8) |
+                ord($data[$offset + 3] ?? throw new InvalidPacketDataException('数据不足')),
                 4
             ],
             3 => [
                 (($firstByte & 0x3F) << 56) |
-                (ord($data[$offset + 1] ?? throw new \InvalidArgumentException('数据不足')) << 48) |
-                (ord($data[$offset + 2] ?? throw new \InvalidArgumentException('数据不足')) << 40) |
-                (ord($data[$offset + 3] ?? throw new \InvalidArgumentException('数据不足')) << 32) |
-                (ord($data[$offset + 4] ?? throw new \InvalidArgumentException('数据不足')) << 24) |
-                (ord($data[$offset + 5] ?? throw new \InvalidArgumentException('数据不足')) << 16) |
-                (ord($data[$offset + 6] ?? throw new \InvalidArgumentException('数据不足')) << 8) |
-                ord($data[$offset + 7] ?? throw new \InvalidArgumentException('数据不足')),
+                (ord($data[$offset + 1] ?? throw new InvalidPacketDataException('数据不足')) << 48) |
+                (ord($data[$offset + 2] ?? throw new InvalidPacketDataException('数据不足')) << 40) |
+                (ord($data[$offset + 3] ?? throw new InvalidPacketDataException('数据不足')) << 32) |
+                (ord($data[$offset + 4] ?? throw new InvalidPacketDataException('数据不足')) << 24) |
+                (ord($data[$offset + 5] ?? throw new InvalidPacketDataException('数据不足')) << 16) |
+                (ord($data[$offset + 6] ?? throw new InvalidPacketDataException('数据不足')) << 8) |
+                ord($data[$offset + 7] ?? throw new InvalidPacketDataException('数据不足')),
                 8
             ],
         };
@@ -127,7 +132,7 @@ abstract class Packet
             2 => pack('n', $packetNumber & 0xFFFF),
             3 => substr(pack('N', $packetNumber), 1),
             4 => pack('N', $packetNumber),
-            default => throw new \InvalidArgumentException('包号长度必须是1-4字节'),
+            default => throw new InvalidPacketDataException('包号长度必须是1-4字节'),
         };
     }
 
@@ -141,7 +146,7 @@ abstract class Packet
             2 => unpack('n', substr($data, $offset, 2))[1],
             3 => unpack('N', "\x00" . substr($data, $offset, 3))[1],
             4 => unpack('N', substr($data, $offset, 4))[1],
-            default => throw new \InvalidArgumentException('包号长度必须是1-4字节'),
+            default => throw new InvalidPacketDataException('包号长度必须是1-4字节'),
         };
     }
 } 

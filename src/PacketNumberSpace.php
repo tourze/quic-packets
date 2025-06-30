@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Tourze\QUIC\Packets;
 
+use Tourze\QUIC\Packets\Exception\InvalidPacketNumberSpaceException;
+
 /**
  * QUIC 包号空间管理器
  *
@@ -62,7 +64,7 @@ class PacketNumberSpace
     public function recordReceived(int $packetNumber): void
     {
         if (!$this->isValid($packetNumber)) {
-            throw new \InvalidArgumentException('无效的包号：' . $packetNumber);
+            throw new InvalidPacketNumberSpaceException('无效的包号：' . $packetNumber);
         }
 
         $this->receivedPackets[$packetNumber] = [

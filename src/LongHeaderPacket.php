@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Tourze\QUIC\Packets;
 
+use Tourze\QUIC\Packets\Exception\InvalidPacketDataException;
+use Tourze\QUIC\Packets\Exception\InvalidPacketTypeException;
+
 /**
  * 长包头包抽象类
  *
@@ -20,7 +23,7 @@ abstract class LongHeaderPacket extends Packet
         string $payload = '',
     ) {
         if (!$type->isLongHeader()) {
-            throw new \InvalidArgumentException('只能用于长包头包类型');
+            throw new InvalidPacketTypeException('只能用于长包头包类型');
         }
 
         parent::__construct($type, $packetNumber, $payload);
@@ -85,18 +88,18 @@ abstract class LongHeaderPacket extends Packet
     protected static function decodeLongHeader(string $data, int &$offset): array
     {
         if (strlen($data) < $offset + 7) {
-            throw new \InvalidArgumentException('数据长度不足以解码长包头');
+            throw new InvalidPacketDataException('数据长度不足以解码长包头');
         }
 
         $firstByte = ord($data[$offset++]);
 
         // 验证包格式
         if (($firstByte & 0x80) === 0) {
-            throw new \InvalidArgumentException('不是长包头包');
+            throw new InvalidPacketDataException('不是长包头包');
         }
 
         if (($firstByte & 0x40) === 0) {
-            throw new \InvalidArgumentException('Fixed Bit 必须为1');
+            throw new InvalidPacketDataException('Fixed Bit 必须为1');
         }
 
         // 解析包类型
@@ -110,7 +113,7 @@ abstract class LongHeaderPacket extends Packet
         // 解析目标连接ID
         $destConnIdLength = ord($data[$offset++]);
         if (strlen($data) < $offset + $destConnIdLength) {
-            throw new \InvalidArgumentException('数据长度不足以解码目标连接ID');
+            throw new InvalidPacketDataException('数据长度不足以解码目标连接ID');
         }
         $destinationConnectionId = substr($data, $offset, $destConnIdLength);
         $offset += $destConnIdLength;
@@ -118,7 +121,7 @@ abstract class LongHeaderPacket extends Packet
         // 解析源连接ID
         $srcConnIdLength = ord($data[$offset++]);
         if (strlen($data) < $offset + $srcConnIdLength) {
-            throw new \InvalidArgumentException('数据长度不足以解码源连接ID');
+            throw new InvalidPacketDataException('数据长度不足以解码源连接ID');
         }
         $sourceConnectionId = substr($data, $offset, $srcConnIdLength);
         $offset += $srcConnIdLength;

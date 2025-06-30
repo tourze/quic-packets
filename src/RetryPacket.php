@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Tourze\QUIC\Packets;
 
+use Tourze\QUIC\Packets\Exception\InvalidPacketDataException;
+use Tourze\QUIC\Packets\Exception\InvalidPacketTypeException;
+
 /**
  * Retry 包
  *
@@ -89,13 +92,13 @@ class RetryPacket extends LongHeaderPacket
         $headerInfo = self::decodeLongHeader($data, $offset);
 
         if ($headerInfo['typeValue'] !== PacketType::RETRY->value) {
-            throw new \InvalidArgumentException('不是 Retry 包');
+            throw new InvalidPacketTypeException('不是 Retry 包');
         }
 
         // Retry 包的剩余部分是 Retry Token + Retry Integrity Tag (16 bytes)
         $remainingLength = strlen($data) - $offset;
         if ($remainingLength < 16) {
-            throw new \InvalidArgumentException('Retry 包长度不足，缺少 Integrity Tag');
+            throw new InvalidPacketDataException('Retry 包长度不足，缺少 Integrity Tag');
         }
 
         // Retry Token 是除了最后16字节（Integrity Tag）之外的所有数据

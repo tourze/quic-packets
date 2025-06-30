@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Tourze\QUIC\Packets;
 
+use Tourze\QUIC\Packets\Exception\InvalidPacketDataException;
+use Tourze\QUIC\Packets\Exception\InvalidPacketTypeException;
+
 /**
  * Version Negotiation 包
  *
@@ -64,7 +67,7 @@ class VersionNegotiationPacket extends Packet
         // Destination Connection ID Length
         $dcidLength = strlen($this->destinationConnectionId);
         if ($dcidLength > 255) {
-            throw new \InvalidArgumentException('目标连接 ID 长度不能超过 255 字节');
+            throw new InvalidPacketDataException('目标连接 ID 长度不能超过 255 字节');
         }
         $packet .= chr($dcidLength);
 
@@ -74,7 +77,7 @@ class VersionNegotiationPacket extends Packet
         // Source Connection ID Length
         $scidLength = strlen($this->sourceConnectionId);
         if ($scidLength > 255) {
-            throw new \InvalidArgumentException('源连接 ID 长度不能超过 255 字节');
+            throw new InvalidPacketDataException('源连接 ID 长度不能超过 255 字节');
         }
         $packet .= chr($scidLength);
 
@@ -84,7 +87,7 @@ class VersionNegotiationPacket extends Packet
         // Supported Versions (4 bytes each)
         foreach ($this->supportedVersions as $version) {
             if (!is_int($version)) {
-                throw new \InvalidArgumentException('版本必须是整数');
+                throw new InvalidPacketDataException('版本必须是整数');
             }
             $packet .= pack('N', $version);
         }
@@ -98,7 +101,7 @@ class VersionNegotiationPacket extends Packet
     public static function decode(string $data): static
     {
         if (strlen($data) < 7) {
-            throw new \InvalidArgumentException('数据长度不足以解码版本协商包');
+            throw new InvalidPacketDataException('数据长度不足以解码版本协商包');
         }
 
         $offset = 0;
@@ -106,20 +109,20 @@ class VersionNegotiationPacket extends Packet
         // First byte
         $firstByte = ord($data[$offset++]);
         if (($firstByte & 0x80) === 0) {
-            throw new \InvalidArgumentException('不是长包头包');
+            throw new InvalidPacketTypeException('不是长包头包');
         }
 
         // Version (应该是 0x00000000)
         $version = unpack('N', substr($data, $offset, 4))[1];
         $offset += 4;
         if ($version !== 0x00000000) {
-            throw new \InvalidArgumentException('不是版本协商包');
+            throw new InvalidPacketTypeException('不是版本协商包');
         }
 
         // Destination Connection ID Length
         $dcidLength = ord($data[$offset++]);
         if (strlen($data) < $offset + $dcidLength) {
-            throw new \InvalidArgumentException('数据长度不足以解码目标连接 ID');
+            throw new InvalidPacketDataException('数据长度不足以解码目标连接 ID');
         }
 
         // Destination Connection ID
@@ -128,11 +131,11 @@ class VersionNegotiationPacket extends Packet
 
         // Source Connection ID Length
         if (strlen($data) < $offset + 1) {
-            throw new \InvalidArgumentException('数据长度不足以解码源连接 ID 长度');
+            throw new InvalidPacketDataException('数据长度不足以解码源连接 ID 长度');
         }
         $scidLength = ord($data[$offset++]);
         if (strlen($data) < $offset + $scidLength) {
-            throw new \InvalidArgumentException('数据长度不足以解码源连接 ID');
+            throw new InvalidPacketDataException('数据长度不足以解码源连接 ID');
         }
 
         // Source Connection ID
@@ -147,7 +150,7 @@ class VersionNegotiationPacket extends Packet
         }
 
         if (empty($supportedVersions)) {
-            throw new \InvalidArgumentException('版本协商包必须包含至少一个支持的版本');
+            throw new InvalidPacketDataException('版本协商包必须包含至少一个支持的版本');
         }
 
         return new static(

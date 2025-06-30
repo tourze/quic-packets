@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Tourze\QUIC\Packets;
 
+use Tourze\QUIC\Packets\Exception\InvalidPacketDataException;
+
 /**
  * QUIC 包编码器
  *
@@ -27,7 +29,7 @@ class PacketEncoder
         $encoded = [];
         foreach ($packets as $packet) {
             if (!$packet instanceof Packet) {
-                throw new \InvalidArgumentException('所有元素必须是 Packet 实例');
+                throw new InvalidPacketDataException('所有元素必须是 Packet 实例');
             }
             $encoded[] = $this->encode($packet);
         }
