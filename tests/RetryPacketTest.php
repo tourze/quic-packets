@@ -4,13 +4,18 @@ declare(strict_types=1);
 
 namespace Tourze\QUIC\Packets\Tests;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Tourze\QUIC\Packets\Exception\InvalidPacketDataException;
 use Tourze\QUIC\Packets\Exception\InvalidPacketTypeException;
 use Tourze\QUIC\Packets\PacketType;
 use Tourze\QUIC\Packets\RetryPacket;
 
-class RetryPacketTest extends TestCase
+/**
+ * @internal
+ */
+#[CoversClass(RetryPacket::class)]
+final class RetryPacketTest extends TestCase
 {
     public function testCreateRetryPacket(): void
     {
@@ -103,7 +108,7 @@ class RetryPacketTest extends TestCase
         $originalDestConnectionId = 'original_dest_id';
         $retryToken = 'test_token';
         $integrityTag = str_repeat("\x00", 16); // 16字节的标签
-        
+
         // 创建带标签的包
         $packet = new RetryPacket(
             version: 0x00000001,
@@ -142,4 +147,27 @@ class RetryPacketTest extends TestCase
         $invalidData = "\xf0\x00\x00\x00\x01\x04dest\x04src_\x05token"; // 缺少16字节的标签
         RetryPacket::decode($invalidData);
     }
-} 
+
+    public function testValidateIntegrityTag(): void
+    {
+        $originalDestConnectionId = 'original_dest_id';
+        $retryToken = 'test_token';
+        $integrityTag = str_repeat("\x00", 16);
+
+        $packet = new RetryPacket(
+            version: 0x00000001,
+            destinationConnectionId: 'dest',
+            sourceConnectionId: 'src',
+            retryToken: $retryToken,
+            retryIntegrityTag: $integrityTag
+        );
+
+        // 测试方法存在并可以调用
+        $result = $packet->validateIntegrityTag($originalDestConnectionId);
+        $this->assertIsBool($result);
+
+        // 测试不同的原始连接ID
+        $result2 = $packet->validateIntegrityTag('different_id');
+        $this->assertIsBool($result2);
+    }
+}

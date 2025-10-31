@@ -28,7 +28,7 @@ enum PacketType: int implements Labelable, Itemable, Selectable
 
     // 短包头包类型（1-RTT）
     case ONE_RTT = 0x40;
-    
+
     // 特殊包类型
     case STATELESS_RESET = 0x41;
 
@@ -77,4 +77,4 @@ enum PacketType: int implements Labelable, Itemable, Selectable
     {
         return $this->getName();
     }
-} 
+}

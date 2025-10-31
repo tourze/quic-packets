@@ -11,6 +11,8 @@ use Tourze\QUIC\Packets\Exception\InvalidPacketTypeException;
  * Initial 包
  *
  * 根据 RFC 9000 Section 17.2.2 定义
+ *
+ * @phpstan-consistent-constructor
  */
 class InitialPacket extends LongHeaderPacket
 {
@@ -63,6 +65,8 @@ class InitialPacket extends LongHeaderPacket
      */
     public function encode(): string
     {
+        assert(null !== $this->packetNumber, '包号不能为null');
+
         $packet = $this->encodeLongHeader();
 
         // Token Length (变长整数)
@@ -90,8 +94,8 @@ class InitialPacket extends LongHeaderPacket
      */
     public static function decode(string $data): static
     {
-        $offset = 0;
-        $headerInfo = self::decodeLongHeader($data, $offset);
+        $headerInfo = self::decodeLongHeader($data, 0);
+        $offset = $headerInfo['offset'];
 
         if ($headerInfo['typeValue'] !== PacketType::INITIAL->value) {
             throw new InvalidPacketTypeException('不是 Initial 包');
@@ -144,8 +148,11 @@ class InitialPacket extends LongHeaderPacket
      */
     protected function getTypeSpecificBits(): int
     {
+        assert(null !== $this->packetNumber, '包号不能为null');
+
         // 包号长度编码在低2位
         $packetNumberLength = $this->calculatePacketNumberLength($this->packetNumber);
+
         return ($packetNumberLength - 1) & 0x03;
     }
 
@@ -156,12 +163,14 @@ class InitialPacket extends LongHeaderPacket
     {
         if ($packetNumber < 256) {
             return 1;
-        } elseif ($packetNumber < 65536) {
-            return 2;
-        } elseif ($packetNumber < 16777216) {
-            return 3;
-        } else {
-            return 4;
         }
+        if ($packetNumber < 65536) {
+            return 2;
+        }
+        if ($packetNumber < 16777216) {
+            return 3;
+        }
+
+        return 4;
     }
-} 
+}

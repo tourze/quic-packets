@@ -2,18 +2,23 @@
 
 declare(strict_types=1);
 
-namespace Tourze\QUIC\Packets\Tests\Unit\Exception;
+namespace Tourze\QUIC\Packets\Tests\Exception;
 
-use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\CoversClass;
+use Tourze\PHPUnitBase\AbstractExceptionTestCase;
 use Tourze\QUIC\Packets\Exception\InvalidPacketTypeException;
 use Tourze\QUIC\Packets\Exception\PacketException;
 
-class InvalidPacketTypeExceptionTest extends TestCase
+/**
+ * @internal
+ */
+#[CoversClass(InvalidPacketTypeException::class)]
+final class InvalidPacketTypeExceptionTest extends AbstractExceptionTestCase
 {
     public function testExceptionIsInstanceOfPacketException(): void
     {
         $exception = new InvalidPacketTypeException('Test message');
-        
+
         $this->assertInstanceOf(PacketException::class, $exception);
     }
 
@@ -21,7 +26,7 @@ class InvalidPacketTypeExceptionTest extends TestCase
     {
         $message = 'Invalid packet type';
         $exception = new InvalidPacketTypeException($message);
-        
+
         $this->assertSame($message, $exception->getMessage());
     }
 
@@ -29,7 +34,7 @@ class InvalidPacketTypeExceptionTest extends TestCase
     {
         $code = 98765;
         $exception = new InvalidPacketTypeException('Test message', $code);
-        
+
         $this->assertSame($code, $exception->getCode());
     }
 
@@ -37,7 +42,7 @@ class InvalidPacketTypeExceptionTest extends TestCase
     {
         $previous = new \Exception('Previous exception');
         $exception = new InvalidPacketTypeException('Test message', 0, $previous);
-        
+
         $this->assertSame($previous, $exception->getPrevious());
     }
 }

@@ -11,6 +11,8 @@ use Tourze\QUIC\Packets\Exception\InvalidPacketTypeException;
  * Handshake 包
  *
  * 根据 RFC 9000 Section 17.2.4 定义
+ *
+ * @phpstan-consistent-constructor
  */
 class HandshakePacket extends LongHeaderPacket
 {
@@ -54,6 +56,8 @@ class HandshakePacket extends LongHeaderPacket
      */
     public function encode(): string
     {
+        assert(null !== $this->packetNumber, '包号不能为null');
+
         $packet = $this->encodeLongHeader();
 
         // Length (变长整数) - 包号 + 负载的长度
@@ -75,8 +79,8 @@ class HandshakePacket extends LongHeaderPacket
      */
     public static function decode(string $data): static
     {
-        $offset = 0;
-        $headerInfo = self::decodeLongHeader($data, $offset);
+        $headerInfo = self::decodeLongHeader($data, 0);
+        $offset = $headerInfo['offset'];
 
         if ($headerInfo['typeValue'] !== PacketType::HANDSHAKE->value) {
             throw new InvalidPacketTypeException('不是 Handshake 包');
@@ -117,8 +121,11 @@ class HandshakePacket extends LongHeaderPacket
      */
     protected function getTypeSpecificBits(): int
     {
+        assert(null !== $this->packetNumber, '包号不能为null');
+
         // 包号长度编码在低2位
         $packetNumberLength = $this->calculatePacketNumberLength($this->packetNumber);
+
         return ($packetNumberLength - 1) & 0x03;
     }
 
@@ -129,12 +136,14 @@ class HandshakePacket extends LongHeaderPacket
     {
         if ($packetNumber < 256) {
             return 1;
-        } elseif ($packetNumber < 65536) {
-            return 2;
-        } elseif ($packetNumber < 16777216) {
-            return 3;
-        } else {
-            return 4;
         }
+        if ($packetNumber < 65536) {
+            return 2;
+        }
+        if ($packetNumber < 16777216) {
+            return 3;
+        }
+
+        return 4;
     }
-} 
+}

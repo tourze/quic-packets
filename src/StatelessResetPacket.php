@@ -11,6 +11,8 @@ use Tourze\QUIC\Packets\Exception\InvalidPacketDataException;
  *
  * 根据 RFC 9000 Section 10.3 定义
  * 用于在无法处理连接时发送重置信号
+ *
+ * @phpstan-consistent-constructor
  */
 class StatelessResetPacket extends Packet
 {
@@ -18,7 +20,7 @@ class StatelessResetPacket extends Packet
         protected readonly string $statelessResetToken,
         protected readonly string $randomData = '',
     ) {
-        if (strlen($statelessResetToken) !== 16) {
+        if (16 !== strlen($statelessResetToken)) {
             throw new InvalidPacketDataException('无状态重置令牌必须是16字节');
         }
 
@@ -60,7 +62,8 @@ class StatelessResetPacket extends Packet
         // 随机数据（至少需要22字节总长度）
         $randomLength = max(21, strlen($this->randomData)); // 至少21字节加上第一字节
         if (strlen($this->randomData) < $randomLength) {
-            $packet .= $this->randomData . random_bytes($randomLength - strlen($this->randomData));
+            $bytesToGenerate = $randomLength - strlen($this->randomData);
+            $packet .= $this->randomData . ($bytesToGenerate > 0 ? random_bytes($bytesToGenerate) : '');
         } else {
             $packet .= substr($this->randomData, 0, $randomLength);
         }
@@ -117,6 +120,7 @@ class StatelessResetPacket extends Packet
     public static function validateToken(string $connectionId, string $token, string $secretKey): bool
     {
         $expectedToken = self::generateToken($connectionId, $secretKey);
+
         return hash_equals($expectedToken, $token);
     }
 
@@ -126,8 +130,8 @@ class StatelessResetPacket extends Packet
     public static function createWithMinLength(string $statelessResetToken, int $minLength = 22): static
     {
         $randomDataLength = max(0, $minLength - 17); // 减去第一字节和16字节令牌
-        $randomData = random_bytes($randomDataLength);
-        
+        $randomData = $randomDataLength > 0 ? random_bytes($randomDataLength) : '';
+
         return new static($statelessResetToken, $randomData);
     }
 
@@ -156,4 +160,4 @@ class StatelessResetPacket extends Packet
         // 其他位是随机的，无法进一步验证
         return true;
     }
-} 
+}

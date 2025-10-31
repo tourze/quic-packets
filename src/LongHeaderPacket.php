@@ -84,8 +84,10 @@ abstract class LongHeaderPacket extends Packet
 
     /**
      * 解码长包头公共部分
+     *
+     * @return array{typeValue: int, typeSpecificBits: int, version: int, destinationConnectionId: string, sourceConnectionId: string, offset: int}
      */
-    protected static function decodeLongHeader(string $data, int &$offset): array
+    protected static function decodeLongHeader(string $data, int $offset): array
     {
         if (strlen($data) < $offset + 7) {
             throw new InvalidPacketDataException('数据长度不足以解码长包头');
@@ -107,7 +109,11 @@ abstract class LongHeaderPacket extends Packet
         $typeSpecificBits = $firstByte & 0x0F;
 
         // 解析版本
-        $version = unpack('N', substr($data, $offset, 4))[1];
+        $versionData = unpack('N', substr($data, $offset, 4));
+        if (false === $versionData) {
+            throw new InvalidPacketDataException('无法解码版本');
+        }
+        $version = $versionData[1];
         $offset += 4;
 
         // 解析目标连接ID
@@ -132,6 +138,7 @@ abstract class LongHeaderPacket extends Packet
             'version' => $version,
             'destinationConnectionId' => $destinationConnectionId,
             'sourceConnectionId' => $sourceConnectionId,
+            'offset' => $offset,
         ];
     }
 
@@ -139,4 +146,4 @@ abstract class LongHeaderPacket extends Packet
      * 获取类型特定位
      */
     abstract protected function getTypeSpecificBits(): int;
-} 
+}

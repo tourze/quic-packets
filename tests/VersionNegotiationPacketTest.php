@@ -4,13 +4,18 @@ declare(strict_types=1);
 
 namespace Tourze\QUIC\Packets\Tests;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Tourze\QUIC\Packets\Exception\InvalidPacketDataException;
 use Tourze\QUIC\Packets\Exception\InvalidPacketTypeException;
 use Tourze\QUIC\Packets\PacketType;
 use Tourze\QUIC\Packets\VersionNegotiationPacket;
 
-class VersionNegotiationPacketTest extends TestCase
+/**
+ * @internal
+ */
+#[CoversClass(VersionNegotiationPacket::class)]
+final class VersionNegotiationPacketTest extends TestCase
 {
     public function testCreateVersionNegotiationPacket(): void
     {
@@ -30,7 +35,7 @@ class VersionNegotiationPacketTest extends TestCase
 
     public function testEncodeAndDecodeVersionNegotiationPacket(): void
     {
-        $supportedVersions = [0x00000001, 0xaabbccdd, 0x12345678];
+        $supportedVersions = [0x00000001, 0xAABBCCDD, 0x12345678];
 
         $originalPacket = new VersionNegotiationPacket(
             destinationConnectionId: 'test_dest_12',
@@ -102,4 +107,23 @@ class VersionNegotiationPacketTest extends TestCase
         $invalidData = "\x80\x00\x00\x00\x01\x04dest\x04src_";
         VersionNegotiationPacket::decode($invalidData);
     }
-} 
+
+    public function testSupportsVersion(): void
+    {
+        $supportedVersions = [0x00000001, 0x12345678, 0x87654321];
+        $packet = new VersionNegotiationPacket(
+            destinationConnectionId: 'dest',
+            sourceConnectionId: 'src',
+            supportedVersions: $supportedVersions
+        );
+
+        // 测试支持的版本
+        $this->assertTrue($packet->supportsVersion(0x00000001));
+        $this->assertTrue($packet->supportsVersion(0x12345678));
+        $this->assertTrue($packet->supportsVersion(0x87654321));
+
+        // 测试不支持的版本
+        $this->assertFalse($packet->supportsVersion(0x99999999));
+        $this->assertFalse($packet->supportsVersion(0x00000000));
+    }
+}

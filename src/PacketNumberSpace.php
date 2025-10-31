@@ -14,9 +14,15 @@ use Tourze\QUIC\Packets\Exception\InvalidPacketNumberSpaceException;
 class PacketNumberSpace
 {
     private int $nextPacketNumber = 0;
+
     private int $largestSentPacketNumber = -1;
+
     private int $largestReceivedPacketNumber = -1;
+
+    /** @var array<int, array{sent_time: float, acked: bool, ack_time?: float}> */
     private array $sentPackets = [];
+
+    /** @var array<int, array{received_time: float}> */
     private array $receivedPackets = [];
 
     public function __construct(
@@ -37,6 +43,7 @@ class PacketNumberSpace
             'sent_time' => microtime(true),
             'acked' => false,
         ];
+
         return $packetNumber;
     }
 
@@ -87,6 +94,8 @@ class PacketNumberSpace
 
     /**
      * 获取未确认的包号列表
+     *
+     * @return array<int>
      */
     public function getUnacknowledged(): array
     {
@@ -96,6 +105,7 @@ class PacketNumberSpace
                 $unacked[] = $packetNumber;
             }
         }
+
         return $unacked;
     }
 
@@ -131,17 +141,21 @@ class PacketNumberSpace
         // 根据包号大小选择编码长度
         if ($packetNumber < 256) {
             return 1;
-        } elseif ($packetNumber < 65536) {
-            return 2;
-        } elseif ($packetNumber < 16777216) {
-            return 3;
-        } else {
-            return 4;
         }
+        if ($packetNumber < 65536) {
+            return 2;
+        }
+        if ($packetNumber < 16777216) {
+            return 3;
+        }
+
+        return 4;
     }
 
     /**
      * 检查是否有丢失的包
+     *
+     * @return array<int>
      */
     public function detectLoss(int $threshold = 3): array
     {
@@ -155,7 +169,7 @@ class PacketNumberSpace
             }
         }
 
-        if ($largestAcked === -1) {
+        if (-1 === $largestAcked) {
             return $lostPackets;
         }
 
@@ -191,6 +205,8 @@ class PacketNumberSpace
 
     /**
      * 获取统计信息
+     *
+     * @return array{space_type: string, next_packet_number: int, largest_sent: int, largest_received: int, sent_packets: int, received_packets: int, acked_packets: int, unacked_packets: int}
      */
     public function getStats(): array
     {
@@ -199,9 +215,9 @@ class PacketNumberSpace
 
         foreach ($this->sentPackets as $info) {
             if ($info['acked']) {
-                $ackedCount++;
+                ++$ackedCount;
             } else {
-                $unackedCount++;
+                ++$unackedCount;
             }
         }
 
@@ -216,4 +232,4 @@ class PacketNumberSpace
             'unacked_packets' => $unackedCount,
         ];
     }
-} 
+}

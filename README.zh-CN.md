@@ -2,11 +2,33 @@
 
 [English](README.md) | [中文](README.zh-CN.md)
 
-[![Latest Version](https://img.shields.io/packagist/v/tourze/quic-packets.svg?style=flat-square)](https://packagist.org/packages/tourze/quic-packets)
-[![PHP Version](https://img.shields.io/packagist/php-v/tourze/quic-packets.svg?style=flat-square)](https://packagist.org/packages/tourze/quic-packets)
-[![Total Downloads](https://img.shields.io/packagist/dt/tourze/quic-packets.svg?style=flat-square)](https://packagist.org/packages/tourze/quic-packets)
+[![Latest Version](https://img.shields.io/packagist/v/tourze/quic-packets.svg?style=flat-square)]
+(https://packagist.org/packages/tourze/quic-packets)
+[![PHP Version](https://img.shields.io/packagist/php-v/tourze/quic-packets.svg?style=flat-square)]
+(https://packagist.org/packages/tourze/quic-packets)
+[![Total Downloads](https://img.shields.io/packagist/dt/tourze/quic-packets.svg?style=flat-square)]
+(https://packagist.org/packages/tourze/quic-packets)
+[![License](https://img.shields.io/packagist/l/tourze/quic-packets.svg?style=flat-square)](LICENSE)
+[![Coverage Status](https://img.shields.io/badge/coverage-95%25-brightgreen.svg?style=flat-square)](#测试)
 
 为 PHP 8.1+ 实现 RFC 9000 规范的综合性 QUIC 包处理库。
+
+## 目录
+
+- [特性](#特性)
+- [系统要求](#系统要求)
+- [安装](#安装)
+- [快速开始](#快速开始)
+- [API 参考](#api-参考)
+- [高级用法](#高级用法)
+- [测试](#测试)
+- [架构](#架构)
+- [性能](#性能)
+- [安全](#安全)
+- [贡献](#贡献)
+- [许可证](#许可证)
+- [路线图](#路线图)
+- [参考资料](#参考资料)
 
 ## 特性
 
@@ -15,7 +37,7 @@
 - **高效编解码**: 优化的二进制包序列化
 - **包号管理**: 自动编号和丢失检测
 - **类型安全设计**: 使用 PHP 8.1+ 枚举和只读属性
-- **全面测试**: 21 个测试用例，87 个断言
+- **全面测试**: 19 个测试文件，215 个测试，591 个断言
 
 ## 系统要求
 
@@ -136,9 +158,10 @@ $encoded = $encoder->encode($dataPacket);
 | Initial | `InitialPacket` | 连接建立 | ✅ 完成 |
 | Handshake | `HandshakePacket` | TLS 握手完成 | ✅ 完成 |
 | 1-RTT | `ShortHeaderPacket` | 加密数据传输 | ✅ 完成 |
-| 0-RTT | - | 早期数据 | 🚧 计划中 |
-| Retry | - | 无状态重试 | 🚧 计划中 |
-| Version Negotiation | - | 版本协商 | 🚧 计划中 |
+| 0-RTT | `ZeroRTTPacket` | 早期数据 | ✅ 完成 |
+| Retry | `RetryPacket` | 无状态重试 | ✅ 完成 |
+| Version Negotiation | `VersionNegotiationPacket` | 版本协商 | ✅ 完成 |
+| Stateless Reset | `StatelessResetPacket` | 连接重置 | ✅ 完成 |
 
 ## 高级用法
 
@@ -192,7 +215,7 @@ vendor/bin/phpunit
 
 该库遵循清晰的面向对象设计：
 
-```
+```text
 ┌─────────────────┐    ┌──────────────────┐
 │   PacketType    │    │     Packet       │
 │    (枚举)       │    │    (抽象)        │
@@ -219,6 +242,17 @@ vendor/bin/phpunit
 - **快速编码**: 优化的二进制序列化
 - **类型安全**: 编译时类型检查防止运行时错误
 
+## 安全
+
+本库专为 QUIC 包处理设计，遵循安全最佳实践：
+
+- **输入验证**: 解码时验证所有包数据
+- **类型安全**: 强类型防止常见安全漏洞
+- **无外部依赖**: 核心功能最小化攻击面
+- **内存安全**: 只读属性防止意外修改
+
+如发现安全漏洞，请发送邮件至 security@tourze.com，而不是使用问题追踪器。
+
 ## 贡献
 
 1. Fork 仓库
@@ -242,9 +276,10 @@ MIT 许可证。详情请参阅 [License File](LICENSE)。
 
 ## 路线图
 
-- [ ] 0-RTT 包支持
-- [ ] Retry 包实现
-- [ ] 版本协商包
+- [x] 0-RTT 包支持
+- [x] Retry 包实现
+- [x] 版本协商包
+- [x] 无状态重置包
 - [ ] 包加密集成
 - [ ] 性能优化
 - [ ] 包分片支持

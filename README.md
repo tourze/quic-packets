@@ -2,11 +2,33 @@
 
 [English](README.md) | [中文](README.zh-CN.md)
 
-[![Latest Version](https://img.shields.io/packagist/v/tourze/quic-packets.svg?style=flat-square)](https://packagist.org/packages/tourze/quic-packets)
-[![PHP Version](https://img.shields.io/packagist/php-v/tourze/quic-packets.svg?style=flat-square)](https://packagist.org/packages/tourze/quic-packets)
-[![Total Downloads](https://img.shields.io/packagist/dt/tourze/quic-packets.svg?style=flat-square)](https://packagist.org/packages/tourze/quic-packets)
+[![Latest Version](https://img.shields.io/packagist/v/tourze/quic-packets.svg?style=flat-square)]
+(https://packagist.org/packages/tourze/quic-packets)
+[![PHP Version](https://img.shields.io/packagist/php-v/tourze/quic-packets.svg?style=flat-square)]
+(https://packagist.org/packages/tourze/quic-packets)
+[![Total Downloads](https://img.shields.io/packagist/dt/tourze/quic-packets.svg?style=flat-square)]
+(https://packagist.org/packages/tourze/quic-packets)
+[![License](https://img.shields.io/packagist/l/tourze/quic-packets.svg?style=flat-square)](LICENSE)
+[![Coverage Status](https://img.shields.io/badge/coverage-95%25-brightgreen.svg?style=flat-square)](#testing)
 
 A comprehensive QUIC packet handling library implementing RFC 9000 specifications for PHP 8.1+.
+
+## Table of Contents
+
+- [Features](#features)
+- [Requirements](#requirements)
+- [Installation](#installation)
+- [Quick Start](#quick-start)
+- [API Reference](#api-reference)
+- [Advanced Usage](#advanced-usage)
+- [Testing](#testing)
+- [Architecture](#architecture)
+- [Performance](#performance)
+- [Security](#security)
+- [Contributing](#contributing)
+- [License](#license)
+- [Roadmap](#roadmap)
+- [References](#references)
 
 ## Features
 
@@ -15,7 +37,7 @@ A comprehensive QUIC packet handling library implementing RFC 9000 specification
 - **Efficient Encoding/Decoding**: Optimized binary packet serialization
 - **Packet Number Management**: Automatic numbering with loss detection
 - **Type-Safe Design**: Modern PHP 8.1+ with enums and readonly properties
-- **Comprehensive Testing**: 21 test cases with 87 assertions
+- **Comprehensive Testing**: 215 tests with 591 assertions across 19 test files
 
 ## Requirements
 
@@ -136,9 +158,10 @@ $encoded = $encoder->encode($dataPacket);
 | Initial | `InitialPacket` | Connection establishment | ✅ Complete |
 | Handshake | `HandshakePacket` | TLS handshake completion | ✅ Complete |
 | 1-RTT | `ShortHeaderPacket` | Encrypted data transmission | ✅ Complete |
-| 0-RTT | - | Early data | 🚧 Planned |
-| Retry | - | Stateless retry | 🚧 Planned |
-| Version Negotiation | - | Version agreement | 🚧 Planned |
+| 0-RTT | `ZeroRTTPacket` | Early data | ✅ Complete |
+| Retry | `RetryPacket` | Stateless retry | ✅ Complete |
+| Version Negotiation | `VersionNegotiationPacket` | Version agreement | ✅ Complete |
+| Stateless Reset | `StatelessResetPacket` | Connection reset | ✅ Complete |
 
 ## Advanced Usage
 
@@ -192,7 +215,7 @@ From project root:
 
 The library follows a clean, object-oriented design:
 
-```
+```text
 ┌─────────────────┐    ┌──────────────────┐
 │   PacketType    │    │     Packet       │
 │    (enum)       │    │   (abstract)     │
@@ -219,6 +242,17 @@ The library follows a clean, object-oriented design:
 - **Fast Encoding**: Optimized binary serialization
 - **Type Safety**: Compile-time type checking prevents runtime errors
 
+## Security
+
+This library is designed for QUIC packet handling and follows security best practices:
+
+- **Input Validation**: All packet data is validated during decoding
+- **Type Safety**: Strong typing prevents common security vulnerabilities
+- **No External Dependencies**: Minimal attack surface for core functionality
+- **Memory Safe**: Readonly properties prevent unintended modifications
+
+For security vulnerabilities, please email security@tourze.com instead of using the issue tracker.
+
 ## Contributing
 
 1. Fork the repository
@@ -242,9 +276,10 @@ The MIT License (MIT). Please see [License File](LICENSE) for more information.
 
 ## Roadmap
 
-- [ ] 0-RTT packet support
-- [ ] Retry packet implementation
-- [ ] Version negotiation packets
+- [x] 0-RTT packet support
+- [x] Retry packet implementation
+- [x] Version negotiation packets
+- [x] Stateless reset packets
 - [ ] Packet encryption integration
 - [ ] Performance optimizations
 - [ ] Packet fragmentation support

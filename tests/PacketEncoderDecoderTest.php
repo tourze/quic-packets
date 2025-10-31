@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tourze\QUIC\Packets\Tests;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Tourze\QUIC\Packets\Exception\InvalidPacketDataException;
 use Tourze\QUIC\Packets\HandshakePacket;
@@ -17,15 +18,19 @@ use Tourze\QUIC\Packets\VersionNegotiationPacket;
 use Tourze\QUIC\Packets\ZeroRTTPacket;
 
 /**
- * 包编解码器测试
+ * @internal
  */
-class PacketEncoderDecoderTest extends TestCase
+#[CoversClass(PacketEncoder::class)]
+final class PacketEncoderDecoderTest extends TestCase
 {
     private PacketEncoder $encoder;
+
     private PacketDecoder $decoder;
 
     protected function setUp(): void
     {
+        parent::setUp();
+
         $this->encoder = new PacketEncoder();
         $this->decoder = new PacketDecoder();
     }
@@ -121,7 +126,7 @@ class PacketEncoderDecoderTest extends TestCase
         $decoded = $this->decoder->decodeBatch($encoded);
         $this->assertCount(3, $decoded);
 
-        for ($i = 0; $i < 3; $i++) {
+        for ($i = 0; $i < 3; ++$i) {
             $this->assertEquals($packets[$i]->getType(), $decoded[$i]->getType());
             $this->assertEquals($packets[$i]->getPacketNumber(), $decoded[$i]->getPacketNumber());
             $this->assertEquals($packets[$i]->getPayload(), $decoded[$i]->getPayload());
@@ -183,7 +188,7 @@ class PacketEncoderDecoderTest extends TestCase
         $packet = new InitialPacket(1, 'dest', 'src', 'token', 1, 'data');
         $encoded = $this->encoder->encode($packet);
         $size = $this->encoder->getEncodedSize($packet);
-        
+
         $this->assertEquals(strlen($encoded), $size);
         $this->assertGreaterThan(0, $size);
     }
@@ -202,9 +207,9 @@ class PacketEncoderDecoderTest extends TestCase
         foreach ($testPackets as $originalPacket) {
             $encoded = $this->encoder->encode($originalPacket);
             $decodedPacket = $this->decoder->decode($encoded);
-            
+
             $this->assertSame($originalPacket->getType(), $decodedPacket->getType());
-            
+
             // 验证特定字段（使用类型检查和强制转换）
             if ($originalPacket instanceof InitialPacket && $decodedPacket instanceof InitialPacket) {
                 $this->assertSame($originalPacket->getToken(), $decodedPacket->getToken());
@@ -215,4 +220,37 @@ class PacketEncoderDecoderTest extends TestCase
             }
         }
     }
-} 
+
+    public function testCanEncode(): void
+    {
+        $validPacket = new InitialPacket(1, 'dest', 'src', 'token', 1, 'data');
+        $this->assertTrue($this->encoder->canEncode($validPacket));
+
+        $handshakePacket = new HandshakePacket(1, 'dest', 'src', 2, 'handshake');
+        $this->assertTrue($this->encoder->canEncode($handshakePacket));
+    }
+
+    public function testEncodeBatch(): void
+    {
+        $packets = [
+            new InitialPacket(1, 'dest1', 'src1', 'token1', 1, 'data1'),
+            new HandshakePacket(1, 'dest2', 'src2', 2, 'data2'),
+        ];
+
+        $encoded = $this->encoder->encodeBatch($packets);
+        $this->assertCount(2, $encoded);
+        $this->assertIsString($encoded[0]);
+        $this->assertIsString($encoded[1]);
+    }
+
+    public function testEncodeWithChecksum(): void
+    {
+        $packet = new InitialPacket(1, 'dest', 'src', 'token', 1, 'data');
+        $encoded = $this->encoder->encodeWithChecksum($packet);
+        $this->assertNotEmpty($encoded);
+
+        // 验证与普通编码结果一致（当前实现中）
+        $normalEncoded = $this->encoder->encode($packet);
+        $this->assertEquals($normalEncoded, $encoded);
+    }
+}

@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Tourze\QUIC\Packets\Tests;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Tourze\QUIC\Packets\Exception\InvalidPacketDataException;
-use Tourze\QUIC\Packets\Exception\InvalidPacketTypeException;
 use Tourze\QUIC\Packets\HandshakePacket;
 use Tourze\QUIC\Packets\InitialPacket;
 use Tourze\QUIC\Packets\PacketDecoder;
@@ -16,12 +16,18 @@ use Tourze\QUIC\Packets\ShortHeaderPacket;
 use Tourze\QUIC\Packets\VersionNegotiationPacket;
 use Tourze\QUIC\Packets\ZeroRTTPacket;
 
-class PacketDecoderTest extends TestCase
+/**
+ * @internal
+ */
+#[CoversClass(PacketDecoder::class)]
+final class PacketDecoderTest extends TestCase
 {
     private PacketDecoder $decoder;
 
     protected function setUp(): void
     {
+        parent::setUp();
+
         $this->decoder = new PacketDecoder();
     }
 
@@ -46,8 +52,8 @@ class PacketDecoderTest extends TestCase
     public function testDecodeVersionNegotiationPacket(): void
     {
         // 版本协商包：首字节 + 版本0x00000000 + DCID长度 + DCID + SCID长度 + SCID + 支持版本列表
-        $data = "\xC0" . pack('N', 0x00000000) . "\x08" . 
-                str_repeat('A', 8) . "\x08" . str_repeat('B', 8) . 
+        $data = "\xC0" . pack('N', 0x00000000) . "\x08" .
+                str_repeat('A', 8) . "\x08" . str_repeat('B', 8) .
                 pack('N', 0x00000001);
 
         $packet = $this->decoder->decode($data);
@@ -58,8 +64,8 @@ class PacketDecoderTest extends TestCase
     public function testDecodeInitialPacket(): void
     {
         // Initial包：首字节 0xC0 (类型0) + 版本 + DCID长度 + DCID + SCID长度 + SCID + 令牌长度 + 长度 + 包号 + 载荷
-        $data = "\xC0" . pack('N', 0x00000001) . "\x08" . 
-                str_repeat('A', 8) . "\x08" . str_repeat('B', 8) . 
+        $data = "\xC0" . pack('N', 0x00000001) . "\x08" .
+                str_repeat('A', 8) . "\x08" . str_repeat('B', 8) .
                 "\x00" . // 令牌长度为0
                 pack('n', 10) . // 载荷长度
                 "\x01" . // 包号长度1字节
@@ -74,8 +80,8 @@ class PacketDecoderTest extends TestCase
     public function testDecodeZeroRTTPacket(): void
     {
         // 0-RTT包：首字节 0xD0 (类型1) + 版本 + DCID长度 + DCID + SCID长度 + SCID + 长度 + 包号 + 载荷
-        $data = "\xD0" . pack('N', 0x00000001) . "\x08" . 
-                str_repeat('A', 8) . "\x08" . str_repeat('B', 8) . 
+        $data = "\xD0" . pack('N', 0x00000001) . "\x08" .
+                str_repeat('A', 8) . "\x08" . str_repeat('B', 8) .
                 pack('n', 10) . // 载荷长度
                 "\x01" . // 包号长度1字节
                 "\x01" . // 包号1
@@ -89,8 +95,8 @@ class PacketDecoderTest extends TestCase
     public function testDecodeHandshakePacket(): void
     {
         // Handshake包：首字节 0xE0 (类型2) + 版本 + DCID长度 + DCID + SCID长度 + SCID + 长度 + 包号 + 载荷
-        $data = "\xE0" . pack('N', 0x00000001) . "\x08" . 
-                str_repeat('A', 8) . "\x08" . str_repeat('B', 8) . 
+        $data = "\xE0" . pack('N', 0x00000001) . "\x08" .
+                str_repeat('A', 8) . "\x08" . str_repeat('B', 8) .
                 pack('n', 10) . // 载荷长度
                 "\x01" . // 包号长度1字节
                 "\x01" . // 包号1
@@ -104,8 +110,8 @@ class PacketDecoderTest extends TestCase
     public function testDecodeRetryPacket(): void
     {
         // Retry包：首字节 0xF0 (类型3) + 版本 + DCID长度 + DCID + SCID长度 + SCID + 重试令牌 + 重试完整性标签
-        $data = "\xF0" . pack('N', 0x00000001) . "\x08" . 
-                str_repeat('A', 8) . "\x08" . str_repeat('B', 8) . 
+        $data = "\xF0" . pack('N', 0x00000001) . "\x08" .
+                str_repeat('A', 8) . "\x08" . str_repeat('B', 8) .
                 str_repeat('D', 8) . // 重试令牌
                 str_repeat('E', 16); // 重试完整性标签(16字节)
 

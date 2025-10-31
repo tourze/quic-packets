@@ -4,13 +4,18 @@ declare(strict_types=1);
 
 namespace Tourze\QUIC\Packets\Tests;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
+use Tourze\QUIC\Packets\Exception\InvalidPacketDataException;
+use Tourze\QUIC\Packets\Exception\InvalidPacketTypeException;
 use Tourze\QUIC\Packets\HandshakePacket;
 use Tourze\QUIC\Packets\PacketType;
-use Tourze\QUIC\Packets\Exception\InvalidPacketTypeException;
-use Tourze\QUIC\Packets\Exception\InvalidPacketDataException;
 
-class HandshakePacketTest extends TestCase
+/**
+ * @internal
+ */
+#[CoversClass(HandshakePacket::class)]
+final class HandshakePacketTest extends TestCase
 {
     public function testConstruct(): void
     {
@@ -91,7 +96,7 @@ class HandshakePacketTest extends TestCase
     {
         $testCases = [
             ['packetNumber' => 100, 'expectedLength' => 1],
-            ['packetNumber' => 1000, 'expectedLength' => 2], 
+            ['packetNumber' => 1000, 'expectedLength' => 2],
             ['packetNumber' => 100000, 'expectedLength' => 3],
             ['packetNumber' => 10000000, 'expectedLength' => 4],
         ];

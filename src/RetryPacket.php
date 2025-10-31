@@ -12,6 +12,8 @@ use Tourze\QUIC\Packets\Exception\InvalidPacketTypeException;
  *
  * 根据 RFC 9000 Section 17.2.5 定义
  * 用于服务器要求客户端重试连接建立
+ *
+ * @phpstan-consistent-constructor
  */
 class RetryPacket extends LongHeaderPacket
 {
@@ -88,8 +90,8 @@ class RetryPacket extends LongHeaderPacket
      */
     public static function decode(string $data): static
     {
-        $offset = 0;
-        $headerInfo = self::decodeLongHeader($data, $offset);
+        $headerInfo = self::decodeLongHeader($data, 0);
+        $offset = $headerInfo['offset'];
 
         if ($headerInfo['typeValue'] !== PacketType::RETRY->value) {
             throw new InvalidPacketTypeException('不是 Retry 包');
@@ -132,7 +134,7 @@ class RetryPacket extends LongHeaderPacket
      */
     public static function generateIntegrityTag(
         string $originalDestinationConnectionId,
-        string $retryPacketWithoutTag
+        string $retryPacketWithoutTag,
     ): string {
         // 这是一个简化实现，实际应该使用 AES-128-GCM
         // 实际实现需要使用 Original Destination Connection ID 和包内容生成
@@ -146,11 +148,11 @@ class RetryPacket extends LongHeaderPacket
     {
         // 构造不包含 Integrity Tag 的包数据
         $packetWithoutTag = $this->encodeLongHeader() . $this->retryToken;
-        
+
         // 生成期望的 Integrity Tag
         $expectedTag = self::generateIntegrityTag($originalDestinationConnectionId, $packetWithoutTag);
-        
+
         // 比较（实际实现中应该使用时间安全的比较）
         return hash_equals($expectedTag, $this->retryIntegrityTag);
     }
-} 
+}

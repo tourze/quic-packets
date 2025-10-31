@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace Tourze\QUIC\Packets\Tests;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Tourze\QUIC\Packets\Exception\InvalidPacketDataException;
 use Tourze\QUIC\Packets\HandshakePacket;
 use Tourze\QUIC\Packets\InitialPacket;
+use Tourze\QUIC\Packets\Packet;
 use Tourze\QUIC\Packets\PacketEncoder;
 use Tourze\QUIC\Packets\PacketType;
 use Tourze\QUIC\Packets\RetryPacket;
@@ -16,12 +18,18 @@ use Tourze\QUIC\Packets\StatelessResetPacket;
 use Tourze\QUIC\Packets\VersionNegotiationPacket;
 use Tourze\QUIC\Packets\ZeroRTTPacket;
 
-class PacketEncoderTest extends TestCase
+/**
+ * @internal
+ */
+#[CoversClass(PacketEncoder::class)]
+final class PacketEncoderTest extends TestCase
 {
     private PacketEncoder $encoder;
 
     protected function setUp(): void
     {
+        parent::setUp();
+
         $this->encoder = new PacketEncoder();
     }
 
@@ -37,7 +45,7 @@ class PacketEncoderTest extends TestCase
         );
 
         $encoded = $this->encoder->encode($packet);
-        
+
         $this->assertGreaterThan(0, strlen($encoded));
     }
 
@@ -52,7 +60,7 @@ class PacketEncoderTest extends TestCase
         );
 
         $encoded = $this->encoder->encode($packet);
-        
+
         $this->assertGreaterThan(0, strlen($encoded));
     }
 
@@ -67,7 +75,7 @@ class PacketEncoderTest extends TestCase
         );
 
         $encoded = $this->encoder->encode($packet);
-        
+
         $this->assertGreaterThan(0, strlen($encoded));
     }
 
@@ -80,7 +88,7 @@ class PacketEncoderTest extends TestCase
         );
 
         $encoded = $this->encoder->encode($packet);
-        
+
         $this->assertGreaterThan(0, strlen($encoded));
     }
 
@@ -93,7 +101,7 @@ class PacketEncoderTest extends TestCase
         );
 
         $encoded = $this->encoder->encode($packet);
-        
+
         $this->assertGreaterThan(0, strlen($encoded));
     }
 
@@ -108,7 +116,7 @@ class PacketEncoderTest extends TestCase
         );
 
         $encoded = $this->encoder->encode($packet);
-        
+
         $this->assertGreaterThan(0, strlen($encoded));
     }
 
@@ -120,7 +128,7 @@ class PacketEncoderTest extends TestCase
         );
 
         $encoded = $this->encoder->encode($packet);
-        
+
         $this->assertGreaterThan(0, strlen($encoded));
     }
 
@@ -141,11 +149,11 @@ class PacketEncoderTest extends TestCase
                 sourceConnectionId: 'src2',
                 packetNumber: 2,
                 payload: 'payload2'
-            )
+            ),
         ];
 
         $encoded = $this->encoder->encodeBatch($packets);
-        
+
         $this->assertCount(2, $encoded);
         $this->assertIsString($encoded[0]);
         $this->assertIsString($encoded[1]);
@@ -158,6 +166,7 @@ class PacketEncoderTest extends TestCase
         $this->expectException(InvalidPacketDataException::class);
         $this->expectExceptionMessage('所有元素必须是 Packet 实例');
 
+        /** @var array<mixed> $packets - 故意混合类型以测试异常 */
         $packets = [
             new InitialPacket(
                 version: 0x00000001,
@@ -167,9 +176,10 @@ class PacketEncoderTest extends TestCase
                 packetNumber: 1,
                 payload: 'payload1'
             ),
-            'invalid_element'
+            'invalid_element',
         ];
 
+        /** @phpstan-ignore-next-line */
         $this->encoder->encodeBatch($packets);
     }
 
@@ -186,7 +196,7 @@ class PacketEncoderTest extends TestCase
 
         $encoded = $this->encoder->encodeWithChecksum($packet);
         $normalEncoded = $this->encoder->encode($packet);
-        
+
         // 当前实现中，checksum和普通编码相同
         $this->assertEquals($normalEncoded, $encoded);
     }
@@ -204,7 +214,7 @@ class PacketEncoderTest extends TestCase
 
         $size = $this->encoder->getEncodedSize($packet);
         $encoded = $this->encoder->encode($packet);
-        
+
         $this->assertEquals(strlen($encoded), $size);
         $this->assertGreaterThan(0, $size);
     }
@@ -221,19 +231,33 @@ class PacketEncoderTest extends TestCase
         );
 
         $canEncode = $this->encoder->canEncode($packet);
-        
+
         $this->assertTrue($canEncode);
     }
 
-    public function testCanEncodeWithMockFailingPacket(): void
+    public function testCanEncodeWithInvalidPacket(): void
     {
-        // 创建一个会在编码时抛出异常的mock包
-        $packet = $this->createMock(InitialPacket::class);
-        $packet->method('encode')
-               ->willThrowException(new \RuntimeException('编码失败'));
+        // 创建一个会在编码时抛出异常的测试包
+        // 通过匿名类实现来避免使用 mock
+        $packet = new class extends Packet {
+            public function __construct()
+            {
+                parent::__construct(PacketType::INITIAL);
+            }
+
+            public function encode(): string
+            {
+                throw new InvalidPacketDataException('编码失败');
+            }
+
+            public static function decode(string $data): static
+            {
+                throw new InvalidPacketDataException('解码失败');
+            }
+        };
 
         $canEncode = $this->encoder->canEncode($packet);
-        
+
         $this->assertFalse($canEncode);
     }
 
@@ -258,7 +282,7 @@ class PacketEncoderTest extends TestCase
 
         $initialEncoded = $this->encoder->encode($initialPacket);
         $handshakeEncoded = $this->encoder->encode($handshakePacket);
-        
+
         $this->assertNotEquals($initialEncoded, $handshakeEncoded);
     }
 
@@ -275,7 +299,7 @@ class PacketEncoderTest extends TestCase
 
         $encoded1 = $this->encoder->encode($packet);
         $encoded2 = $this->encoder->encode($packet);
-        
+
         $this->assertEquals($encoded1, $encoded2);
     }
 }

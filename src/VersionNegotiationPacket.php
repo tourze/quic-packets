@@ -12,9 +12,14 @@ use Tourze\QUIC\Packets\Exception\InvalidPacketTypeException;
  *
  * 根据 RFC 9000 Section 17.2.1 定义
  * 用于服务器向客户端发送支持的 QUIC 版本列表
+ *
+ * @phpstan-consistent-constructor
  */
 class VersionNegotiationPacket extends Packet
 {
+    /**
+     * @param array<int> $supportedVersions
+     */
     public function __construct(
         protected readonly string $destinationConnectionId,
         protected readonly string $sourceConnectionId,
@@ -44,6 +49,8 @@ class VersionNegotiationPacket extends Packet
 
     /**
      * 获取支持的版本列表
+     *
+     * @return array<int>
      */
     public function getSupportedVersions(): array
     {
@@ -105,53 +112,12 @@ class VersionNegotiationPacket extends Packet
         }
 
         $offset = 0;
+        $offset = self::validateHeaderAndVersion($data, $offset);
 
-        // First byte
-        $firstByte = ord($data[$offset++]);
-        if (($firstByte & 0x80) === 0) {
-            throw new InvalidPacketTypeException('不是长包头包');
-        }
+        [$destinationConnectionId, $offset] = self::decodeConnectionId($data, $offset, '目标');
+        [$sourceConnectionId, $offset] = self::decodeConnectionId($data, $offset, '源');
 
-        // Version (应该是 0x00000000)
-        $version = unpack('N', substr($data, $offset, 4))[1];
-        $offset += 4;
-        if ($version !== 0x00000000) {
-            throw new InvalidPacketTypeException('不是版本协商包');
-        }
-
-        // Destination Connection ID Length
-        $dcidLength = ord($data[$offset++]);
-        if (strlen($data) < $offset + $dcidLength) {
-            throw new InvalidPacketDataException('数据长度不足以解码目标连接 ID');
-        }
-
-        // Destination Connection ID
-        $destinationConnectionId = substr($data, $offset, $dcidLength);
-        $offset += $dcidLength;
-
-        // Source Connection ID Length
-        if (strlen($data) < $offset + 1) {
-            throw new InvalidPacketDataException('数据长度不足以解码源连接 ID 长度');
-        }
-        $scidLength = ord($data[$offset++]);
-        if (strlen($data) < $offset + $scidLength) {
-            throw new InvalidPacketDataException('数据长度不足以解码源连接 ID');
-        }
-
-        // Source Connection ID
-        $sourceConnectionId = substr($data, $offset, $scidLength);
-        $offset += $scidLength;
-
-        // Supported Versions
-        $supportedVersions = [];
-        while ($offset + 4 <= strlen($data)) {
-            $supportedVersions[] = unpack('N', substr($data, $offset, 4))[1];
-            $offset += 4;
-        }
-
-        if (empty($supportedVersions)) {
-            throw new InvalidPacketDataException('版本协商包必须包含至少一个支持的版本');
-        }
+        $supportedVersions = self::decodeSupportedVersions($data, $offset);
 
         return new static(
             $destinationConnectionId,
@@ -173,6 +139,10 @@ class VersionNegotiationPacket extends Packet
      */
     public function getHighestSupportedVersion(): int
     {
+        if ([] === $this->supportedVersions) {
+            throw new InvalidPacketDataException('支持的版本列表为空');
+        }
+
         return max($this->supportedVersions);
     }
 
@@ -181,6 +151,81 @@ class VersionNegotiationPacket extends Packet
      */
     public function getLowestSupportedVersion(): int
     {
+        if ([] === $this->supportedVersions) {
+            throw new InvalidPacketDataException('支持的版本列表为空');
+        }
+
         return min($this->supportedVersions);
     }
-} 
+
+    /**
+     * 验证包头和版本
+     */
+    private static function validateHeaderAndVersion(string $data, int $offset): int
+    {
+        // First byte
+        $firstByte = ord($data[$offset++]);
+        if (($firstByte & 0x80) === 0) {
+            throw new InvalidPacketTypeException('不是长包头包');
+        }
+
+        // Version (应该是 0x00000000)
+        $versionData = unpack('N', substr($data, $offset, 4));
+        if (false === $versionData) {
+            throw new InvalidPacketDataException('无法解码版本');
+        }
+        $version = $versionData[1];
+        $offset += 4;
+        if (0x00000000 !== $version) {
+            throw new InvalidPacketTypeException('不是版本协商包');
+        }
+
+        return $offset;
+    }
+
+    /**
+     * 解码连接ID
+     *
+     * @return array{string, int}
+     */
+    private static function decodeConnectionId(string $data, int $offset, string $type): array
+    {
+        if (strlen($data) < $offset + 1) {
+            throw new InvalidPacketDataException("数据长度不足以解码{$type}连接 ID 长度");
+        }
+
+        $cidLength = ord($data[$offset++]);
+        if (strlen($data) < $offset + $cidLength) {
+            throw new InvalidPacketDataException("数据长度不足以解码{$type}连接 ID");
+        }
+
+        $connectionId = substr($data, $offset, $cidLength);
+        $offset += $cidLength;
+
+        return [$connectionId, $offset];
+    }
+
+    /**
+     * 解码支持的版本列表
+     *
+     * @return int[]
+     */
+    private static function decodeSupportedVersions(string $data, int $offset): array
+    {
+        $supportedVersions = [];
+        while ($offset + 4 <= strlen($data)) {
+            $versionData = unpack('N', substr($data, $offset, 4));
+            if (false === $versionData) {
+                throw new InvalidPacketDataException('无法解码支持的版本');
+            }
+            $supportedVersions[] = $versionData[1];
+            $offset += 4;
+        }
+
+        if ([] === $supportedVersions) {
+            throw new InvalidPacketDataException('版本协商包必须包含至少一个支持的版本');
+        }
+
+        return $supportedVersions;
+    }
+}

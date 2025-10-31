@@ -11,6 +11,8 @@ use Tourze\QUIC\Packets\Exception\InvalidPacketTypeException;
  * 短包头包（1-RTT包）
  *
  * 根据 RFC 9000 Section 17.3 定义
+ *
+ * @phpstan-consistent-constructor
  */
 class ShortHeaderPacket extends Packet
 {
@@ -44,6 +46,8 @@ class ShortHeaderPacket extends Packet
      */
     public function encode(): string
     {
+        assert(null !== $this->packetNumber, '包号不能为null');
+
         // 第一字节：Header Form (1) + Fixed Bit (1) + Spin Bit (1) + Reserved Bits (2) + Key Phase (1) + Packet Number Length (2)
         $firstByte = 0x40; // Header Form = 0, Fixed Bit = 1
 
@@ -126,12 +130,14 @@ class ShortHeaderPacket extends Packet
     {
         if ($packetNumber < 256) {
             return 1;
-        } elseif ($packetNumber < 65536) {
-            return 2;
-        } elseif ($packetNumber < 16777216) {
-            return 3;
-        } else {
-            return 4;
         }
+        if ($packetNumber < 65536) {
+            return 2;
+        }
+        if ($packetNumber < 16777216) {
+            return 3;
+        }
+
+        return 4;
     }
-} 
+}

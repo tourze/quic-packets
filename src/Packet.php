@@ -69,14 +69,18 @@ abstract class Packet
     {
         if ($value < 64) {
             return chr($value);
-        } elseif ($value < 16384) {
+        }
+        if ($value < 16384) {
             return pack('n', $value | 0x4000);
-        } elseif ($value < 1073741824) {
+        }
+        if ($value < 1073741824) {
             return pack('N', $value | 0x80000000);
-        } elseif ($value < 4611686018427387904) {
+        }
+        if ($value < 4611686018427387904) {
             // 使用字符串拼接避免大整数位操作导致的浮点数转换
             $bytes = pack('J', $value);
             $bytes[0] = chr(ord($bytes[0]) | 0xC0);
+
             return $bytes;
         }
 
@@ -85,6 +89,8 @@ abstract class Packet
 
     /**
      * 解码变长整数
+     *
+     * @return array{0: int, 1: int} [值, 字节数]
      */
     protected static function decodeVariableInt(string $data, int $offset = 0): array
     {
@@ -99,14 +105,14 @@ abstract class Packet
             0 => [$firstByte & 0x3F, 1],
             1 => [
                 (($firstByte & 0x3F) << 8) | ord($data[$offset + 1] ?? throw new InvalidPacketDataException('数据不足')),
-                2
+                2,
             ],
             2 => [
                 (($firstByte & 0x3F) << 24) |
                 (ord($data[$offset + 1] ?? throw new InvalidPacketDataException('数据不足')) << 16) |
                 (ord($data[$offset + 2] ?? throw new InvalidPacketDataException('数据不足')) << 8) |
                 ord($data[$offset + 3] ?? throw new InvalidPacketDataException('数据不足')),
-                4
+                4,
             ],
             3 => [
                 (($firstByte & 0x3F) << 56) |
@@ -117,7 +123,7 @@ abstract class Packet
                 (ord($data[$offset + 5] ?? throw new InvalidPacketDataException('数据不足')) << 16) |
                 (ord($data[$offset + 6] ?? throw new InvalidPacketDataException('数据不足')) << 8) |
                 ord($data[$offset + 7] ?? throw new InvalidPacketDataException('数据不足')),
-                8
+                8,
             ],
         };
     }
@@ -143,10 +149,19 @@ abstract class Packet
     {
         return match ($length) {
             1 => ord($data[$offset]),
-            2 => unpack('n', substr($data, $offset, 2))[1],
-            3 => unpack('N', "\x00" . substr($data, $offset, 3))[1],
-            4 => unpack('N', substr($data, $offset, 4))[1],
+            2 => [
+                $result = unpack('n', substr($data, $offset, 2)),
+                false === $result ? throw new InvalidPacketDataException('无法解码2字节包号') : $result[1],
+            ][1],
+            3 => [
+                $result = unpack('N', "\x00" . substr($data, $offset, 3)),
+                false === $result ? throw new InvalidPacketDataException('无法解码3字节包号') : $result[1],
+            ][1],
+            4 => [
+                $result = unpack('N', substr($data, $offset, 4)),
+                false === $result ? throw new InvalidPacketDataException('无法解码4字节包号') : $result[1],
+            ][1],
             default => throw new InvalidPacketDataException('包号长度必须是1-4字节'),
         };
     }
-} 
+}

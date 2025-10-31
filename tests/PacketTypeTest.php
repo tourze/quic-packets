@@ -2,12 +2,20 @@
 
 declare(strict_types=1);
 
-namespace Tourze\QUIC\Packets\Tests\Unit;
+namespace Tourze\QUIC\Packets\Tests;
 
-use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\CoversClass;
+use Tourze\EnumExtra\Itemable;
+use Tourze\EnumExtra\Labelable;
+use Tourze\EnumExtra\Selectable;
+use Tourze\PHPUnitEnum\AbstractEnumTestCase;
 use Tourze\QUIC\Packets\PacketType;
 
-class PacketTypeTest extends TestCase
+/**
+ * @internal
+ */
+#[CoversClass(PacketType::class)]
+final class PacketTypeTest extends AbstractEnumTestCase
 {
     public function testAllPacketTypeValues(): void
     {
@@ -135,8 +143,23 @@ class PacketTypeTest extends TestCase
 
     public function testPacketTypeImplementsExpectedInterfaces(): void
     {
-        $this->assertInstanceOf(\Tourze\EnumExtra\Labelable::class, PacketType::INITIAL);
-        $this->assertInstanceOf(\Tourze\EnumExtra\Itemable::class, PacketType::INITIAL);
-        $this->assertInstanceOf(\Tourze\EnumExtra\Selectable::class, PacketType::INITIAL);
+        $this->assertInstanceOf(Labelable::class, PacketType::INITIAL);
+        $this->assertInstanceOf(Itemable::class, PacketType::INITIAL);
+        $this->assertInstanceOf(Selectable::class, PacketType::INITIAL);
+    }
+
+    public function testToArray(): void
+    {
+        $array = PacketType::INITIAL->toArray();
+        $this->assertIsArray($array);
+        $this->assertCount(2, $array);
+        $this->assertArrayHasKey('value', $array);
+        $this->assertArrayHasKey('label', $array);
+        $this->assertSame(0, $array['value']);
+        $this->assertSame('Initial', $array['label']);
+
+        $array = PacketType::VERSION_NEGOTIATION->toArray();
+        $this->assertSame(255, $array['value']);
+        $this->assertSame('Version Negotiation', $array['label']);
     }
 }

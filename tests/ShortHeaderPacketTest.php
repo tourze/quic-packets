@@ -4,13 +4,18 @@ declare(strict_types=1);
 
 namespace Tourze\QUIC\Packets\Tests;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use Tourze\QUIC\Packets\ShortHeaderPacket;
-use Tourze\QUIC\Packets\PacketType;
-use Tourze\QUIC\Packets\Exception\InvalidPacketTypeException;
 use Tourze\QUIC\Packets\Exception\InvalidPacketDataException;
+use Tourze\QUIC\Packets\Exception\InvalidPacketTypeException;
+use Tourze\QUIC\Packets\PacketType;
+use Tourze\QUIC\Packets\ShortHeaderPacket;
 
-class ShortHeaderPacketTest extends TestCase
+/**
+ * @internal
+ */
+#[CoversClass(ShortHeaderPacket::class)]
+final class ShortHeaderPacketTest extends TestCase
 {
     public function testConstruct(): void
     {

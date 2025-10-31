@@ -23,6 +23,9 @@ class PacketEncoder
 
     /**
      * 批量编码包
+     *
+     * @param array<Packet> $packets
+     * @return array<string>
      */
     public function encodeBatch(array $packets): array
     {
@@ -33,6 +36,7 @@ class PacketEncoder
             }
             $encoded[] = $this->encode($packet);
         }
+
         return $encoded;
     }
 
@@ -41,11 +45,10 @@ class PacketEncoder
      */
     public function encodeWithChecksum(Packet $packet): string
     {
-        $data = $this->encode($packet);
-        
+        return $this->encode($packet);
+
         // 对于某些包类型，可能需要添加校验和
         // 这里是扩展点，暂时直接返回编码结果
-        return $data;
     }
 
     /**
@@ -63,9 +66,10 @@ class PacketEncoder
     {
         try {
             $this->encode($packet);
+
             return true;
         } catch (\Throwable) {
             return false;
         }
     }
-} 
+}

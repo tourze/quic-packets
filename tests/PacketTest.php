@@ -2,19 +2,24 @@
 
 declare(strict_types=1);
 
-namespace Tourze\QUIC\Packets\Tests\Unit;
+namespace Tourze\QUIC\Packets\Tests;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
+use Tourze\QUIC\Packets\Exception\InvalidPacketDataException;
 use Tourze\QUIC\Packets\Packet;
 use Tourze\QUIC\Packets\PacketType;
-use Tourze\QUIC\Packets\Exception\InvalidPacketDataException;
 
-class PacketTest extends TestCase
+/**
+ * @internal
+ */
+#[CoversClass(Packet::class)]
+final class PacketTest extends TestCase
 {
     private function createTestPacket(
         PacketType $type = PacketType::INITIAL,
         ?int $packetNumber = 123,
-        string $payload = 'test_payload'
+        string $payload = 'test_payload',
     ): Packet {
         return new class($type, $packetNumber, $payload) extends Packet {
             public function encode(): string
@@ -24,7 +29,7 @@ class PacketTest extends TestCase
 
             public static function decode(string $data): static
             {
-                return new static(PacketType::INITIAL, 123, 'decoded_payload');
+                return new self(PacketType::INITIAL, 123, 'decoded_payload');
             }
         };
     }
@@ -132,7 +137,7 @@ class PacketTest extends TestCase
         // 测试第一个值
         $encoded1 = TestPacket::encodeVariableIntPublic(1073741824);
         $this->assertSame("\xC0\x00\x00\x00\x40\x00\x00\x00", $encoded1);
-        
+
         // 测试较大的值，使用正确的最大值（PHP_INT_MAX的变长整数限制内）
         // 4611686018427387903 是 (2^62 - 1)，这是8字节变长整数的最大值
         $maxValue = 0x3FFFFFFFFFFFFFFF; // 十六进制表示，避免浮点数转换
@@ -246,39 +251,5 @@ class PacketTest extends TestCase
         $this->expectExceptionMessage('包号长度必须是1-4字节');
 
         TestPacket::decodePacketNumberPublic('test', 0, 5);
-    }
-}
-
-// 测试辅助类，用于测试 protected/static 方法
-class TestPacket extends Packet
-{
-    public function encode(): string
-    {
-        return 'test_encoded_data';
-    }
-
-    public static function decode(string $data): static
-    {
-        return new static(PacketType::INITIAL);
-    }
-
-    public static function encodeVariableIntPublic(int $value): string
-    {
-        return static::encodeVariableInt($value);
-    }
-
-    public static function decodeVariableIntPublic(string $data, int $offset = 0): array
-    {
-        return static::decodeVariableInt($data, $offset);
-    }
-
-    public static function encodePacketNumberPublic(int $packetNumber, int $length): string
-    {
-        return static::encodePacketNumber($packetNumber, $length);
-    }
-
-    public static function decodePacketNumberPublic(string $data, int $offset, int $length): int
-    {
-        return static::decodePacketNumber($data, $offset, $length);
     }
 }

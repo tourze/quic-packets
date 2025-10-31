@@ -12,6 +12,8 @@ use Tourze\QUIC\Packets\Exception\InvalidPacketTypeException;
  *
  * 根据 RFC 9000 Section 17.2.3 定义
  * 用于在 TLS 握手完成前发送早期应用数据
+ *
+ * @phpstan-consistent-constructor
  */
 class ZeroRTTPacket extends LongHeaderPacket
 {
@@ -55,6 +57,8 @@ class ZeroRTTPacket extends LongHeaderPacket
      */
     public function encode(): string
     {
+        assert(null !== $this->packetNumber, '包号不能为null');
+
         $packet = $this->encodeLongHeader();
 
         // Length (变长整数) - 包号 + 负载的长度
@@ -76,8 +80,8 @@ class ZeroRTTPacket extends LongHeaderPacket
      */
     public static function decode(string $data): static
     {
-        $offset = 0;
-        $headerInfo = self::decodeLongHeader($data, $offset);
+        $headerInfo = self::decodeLongHeader($data, 0);
+        $offset = $headerInfo['offset'];
 
         if ($headerInfo['typeValue'] !== PacketType::ZERO_RTT->value) {
             throw new InvalidPacketTypeException('不是 0-RTT 包');
@@ -118,8 +122,11 @@ class ZeroRTTPacket extends LongHeaderPacket
      */
     protected function getTypeSpecificBits(): int
     {
+        assert(null !== $this->packetNumber, '包号不能为null');
+
         // 包号长度编码在低2位
         $packetNumberLength = $this->calculatePacketNumberLength($this->packetNumber);
+
         return ($packetNumberLength - 1) & 0x03;
     }
 
@@ -130,12 +137,14 @@ class ZeroRTTPacket extends LongHeaderPacket
     {
         if ($packetNumber < 256) {
             return 1;
-        } elseif ($packetNumber < 65536) {
-            return 2;
-        } elseif ($packetNumber < 16777216) {
-            return 3;
-        } else {
-            return 4;
         }
+        if ($packetNumber < 65536) {
+            return 2;
+        }
+        if ($packetNumber < 16777216) {
+            return 3;
+        }
+
+        return 4;
     }
-} 
+}

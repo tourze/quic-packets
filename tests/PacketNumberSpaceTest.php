@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tourze\QUIC\Packets\Tests;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Tourze\QUIC\Packets\Exception\InvalidPacketNumberSpaceException;
 use Tourze\QUIC\Packets\PacketNumberSpace;
@@ -11,13 +12,18 @@ use Tourze\QUIC\Packets\PacketType;
 
 /**
  * 包号空间管理器测试
+ *
+ * @internal
  */
-class PacketNumberSpaceTest extends TestCase
+#[CoversClass(PacketNumberSpace::class)]
+final class PacketNumberSpaceTest extends TestCase
 {
     private PacketNumberSpace $space;
 
     protected function setUp(): void
     {
+        parent::setUp();
+
         $this->space = new PacketNumberSpace(PacketType::INITIAL);
     }
 
@@ -36,7 +42,7 @@ class PacketNumberSpaceTest extends TestCase
         $this->assertTrue($this->space->isValid(0));
         $this->assertTrue($this->space->isValid(100));
         $this->assertTrue($this->space->isValid(0x3FFFFFFFFFFFFFFF));
-        
+
         $this->assertFalse($this->space->isValid(-1));
         $this->assertFalse($this->space->isValid(0x4000000000000000));
     }
@@ -47,7 +53,7 @@ class PacketNumberSpaceTest extends TestCase
         $this->space->recordReceived(10);
 
         $this->assertEquals(10, $this->space->getLargestReceived());
-        
+
         // 重复包号应该无效
         $this->assertFalse($this->space->isValid(5));
     }
@@ -93,7 +99,7 @@ class PacketNumberSpaceTest extends TestCase
     {
         // 发送5个包
         $packets = [];
-        for ($i = 0; $i < 5; $i++) {
+        for ($i = 0; $i < 5; ++$i) {
             $packets[] = $this->space->getNext();
         }
 
@@ -103,7 +109,7 @@ class PacketNumberSpaceTest extends TestCase
 
         // 检测丢失（阈值为1，这样包0和包1会被认为丢失）
         $lost = $this->space->detectLoss(1);
-        
+
         // 包0和包1应该被认为丢失（在包4之前且差距超过阈值）
         $this->assertCount(2, $lost);
         $this->assertContains($packets[0], $lost);
@@ -123,12 +129,12 @@ class PacketNumberSpaceTest extends TestCase
         $this->space->getNext();
         $this->space->getNext();
         $p1 = $this->space->getNext();
-        
+
         $this->space->acknowledge($p1);
         $this->space->recordReceived(10);
 
         $stats = $this->space->getStats();
-        
+
         $this->assertEquals('Initial', $stats['space_type']);
         $this->assertEquals(3, $stats['next_packet_number']);
         $this->assertEquals(2, $stats['largest_sent']);
@@ -150,15 +156,15 @@ class PacketNumberSpaceTest extends TestCase
         // 获取一个包号并确认它
         $packetNumber = $this->space->getNext();
         $this->space->acknowledge($packetNumber);
-        
+
         // 记录一个接收的包
         $this->space->recordReceived(100);
 
         // 清理应该不会抛出错误
         $this->space->cleanup();
-        
+
         // 验证数据结构仍然有效
         $stats = $this->space->getStats();
         $this->assertNotEmpty($stats);
     }
-} 
+}

@@ -2,15 +2,20 @@
 
 declare(strict_types=1);
 
-namespace Tourze\QUIC\Packets\Tests\Unit;
+namespace Tourze\QUIC\Packets\Tests;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
+use Tourze\QUIC\Packets\Exception\InvalidPacketDataException;
+use Tourze\QUIC\Packets\Exception\InvalidPacketTypeException;
 use Tourze\QUIC\Packets\LongHeaderPacket;
 use Tourze\QUIC\Packets\PacketType;
-use Tourze\QUIC\Packets\Exception\InvalidPacketTypeException;
-use Tourze\QUIC\Packets\Exception\InvalidPacketDataException;
 
-class LongHeaderPacketTest extends TestCase
+/**
+ * @internal
+ */
+#[CoversClass(LongHeaderPacket::class)]
+final class LongHeaderPacketTest extends TestCase
 {
     private function createTestPacket(
         PacketType $type = PacketType::INITIAL,
@@ -18,7 +23,7 @@ class LongHeaderPacketTest extends TestCase
         string $destinationConnectionId = 'dest_id',
         string $sourceConnectionId = 'src_id',
         ?int $packetNumber = 123,
-        string $payload = 'test_payload'
+        string $payload = 'test_payload',
     ): LongHeaderPacket {
         return new class($type, $version, $destinationConnectionId, $sourceConnectionId, $packetNumber, $payload) extends LongHeaderPacket {
             public function encode(): string
@@ -28,10 +33,9 @@ class LongHeaderPacketTest extends TestCase
 
             public static function decode(string $data): static
             {
-                $offset = 0;
-                $headerData = static::decodeLongHeader($data, $offset);
-                
-                return new static(
+                $headerData = self::decodeLongHeader($data, 0);
+
+                return new self(
                     PacketType::INITIAL,
                     $headerData['version'],
                     $headerData['destinationConnectionId'],
@@ -131,7 +135,7 @@ class LongHeaderPacketTest extends TestCase
         // 创建一个测试用的长包头数据，确保 Fixed Bit 设置为1
         $testData = "\xC0\x00\x00\x00\x01\x07dest_id\x06src_id";
         $offset = 0;
-        
+
         $headerData = TestLongHeaderPacket::decodeLongHeaderPublic($testData, $offset);
 
         $this->assertSame(0, $headerData['typeValue']);
@@ -180,29 +184,5 @@ class LongHeaderPacketTest extends TestCase
 
         $this->assertSame('', $packet->getDestinationConnectionId());
         $this->assertSame('', $packet->getSourceConnectionId());
-    }
-}
-
-// 测试辅助类，用于测试 protected/static 方法
-class TestLongHeaderPacket extends LongHeaderPacket
-{
-    public function encode(): string
-    {
-        return '';
-    }
-
-    public static function decode(string $data): static
-    {
-        return new static(PacketType::INITIAL, 1, '', '');
-    }
-
-    protected function getTypeSpecificBits(): int
-    {
-        return 0;
-    }
-
-    public static function decodeLongHeaderPublic(string $data, int &$offset): array
-    {
-        return static::decodeLongHeader($data, $offset);
     }
 }

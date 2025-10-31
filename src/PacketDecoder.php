@@ -19,7 +19,7 @@ class PacketDecoder
      */
     public function decode(string $data): Packet
     {
-        if (empty($data)) {
+        if ('' === $data) {
             throw new InvalidPacketDataException('数据不能为空');
         }
 
@@ -28,9 +28,9 @@ class PacketDecoder
         // 判断是长包头还是短包头
         if (($firstByte & 0x80) !== 0) {
             return $this->decodeLongHeaderPacket($data);
-        } else {
-            return $this->decodeShortHeaderPacket($data);
         }
+
+        return $this->decodeShortHeaderPacket($data);
     }
 
     /**
@@ -43,8 +43,12 @@ class PacketDecoder
         }
 
         // 首先检查是否是版本协商包（版本为 0x00000000）
-        $version = unpack('N', substr($data, 1, 4))[1];
-        if ($version === 0x00000000) {
+        $versionData = unpack('N', substr($data, 1, 4));
+        if (false === $versionData) {
+            throw new InvalidPacketDataException('无法解码版本');
+        }
+        $version = $versionData[1];
+        if (0x00000000 === $version) {
             return VersionNegotiationPacket::decode($data);
         }
 
@@ -82,6 +86,9 @@ class PacketDecoder
 
     /**
      * 批量解码包
+     *
+     * @param array<string> $dataArray
+     * @return array<Packet>
      */
     public function decodeBatch(array $dataArray): array
     {
@@ -89,6 +96,7 @@ class PacketDecoder
         foreach ($dataArray as $data) {
             $packets[] = $this->decode($data);
         }
+
         return $packets;
     }
 
@@ -97,33 +105,31 @@ class PacketDecoder
      */
     public function detectPacketType(string $data): ?PacketType
     {
-        if (empty($data)) {
+        if ('' === $data) {
             return null;
         }
 
         $firstByte = ord($data[0]);
 
-        if (($firstByte & 0x80) !== 0) {
-            // 长包头包 - 检查版本协商包
-            if (strlen($data) >= 5) {
-                $version = unpack('N', substr($data, 1, 4))[1];
-                if ($version === 0x00000000) {
-                    return PacketType::VERSION_NEGOTIATION;
-                }
-            }
-
-            // 其他长包头包
-            $packetType = ($firstByte >> 4) & 0x03;
-            return match ($packetType) {
-                0 => PacketType::INITIAL,
-                1 => PacketType::ZERO_RTT,
-                2 => PacketType::HANDSHAKE,
-                3 => PacketType::RETRY,
-            };
-        } else {
-            // 短包头包
+        // 短包头包直接返回
+        if (($firstByte & 0x80) === 0) {
             return PacketType::ONE_RTT;
         }
+
+        // 长包头包 - 检查版本协商包
+        if ($this->isVersionNegotiationPacket($data)) {
+            return PacketType::VERSION_NEGOTIATION;
+        }
+
+        // 其他长包头包
+        $packetType = ($firstByte >> 4) & 0x03;
+
+        return match ($packetType) {
+            0 => PacketType::INITIAL,
+            1 => PacketType::ZERO_RTT,
+            2 => PacketType::HANDSHAKE,
+            3 => PacketType::RETRY,
+        };
     }
 
     /**
@@ -131,7 +137,7 @@ class PacketDecoder
      */
     public function validatePacketFormat(string $data): bool
     {
-        if (empty($data)) {
+        if ('' === $data) {
             return false;
         }
 
@@ -150,16 +156,36 @@ class PacketDecoder
             }
 
             // 检查版本协商包
-            $version = unpack('N', substr($data, 1, 4))[1];
-            if ($version === 0x00000000) {
-                // 版本协商包至少需要7字节
-                return strlen($data) >= 7;
+            $versionData = unpack('N', substr($data, 1, 4));
+            if (false !== $versionData) {
+                $version = $versionData[1];
+                if (0x00000000 === $version) {
+                    // 版本协商包至少需要7字节
+                    return strlen($data) >= 7;
+                }
             }
 
             return true;
-        } else {
-            // 短包头包最少需要2字节
-            return strlen($data) >= 2;
         }
+
+        // 短包头包最少需要2字节
+        return strlen($data) >= 2;
     }
-} 
+
+    /**
+     * 检查是否为版本协商包
+     */
+    private function isVersionNegotiationPacket(string $data): bool
+    {
+        if (strlen($data) < 5) {
+            return false;
+        }
+
+        $versionData = unpack('N', substr($data, 1, 4));
+        if (false === $versionData) {
+            return false;
+        }
+
+        return 0x00000000 === $versionData[1];
+    }
+}
