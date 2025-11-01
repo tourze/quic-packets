@@ -5,7 +5,7 @@
   "license": "MIT",
   "require": {
     "ext-hash": "*",
-    "tourze/enum-extra": "1.*"
+    "tourze/enum-extra": "1.0.*"
   },
   "require-dev": {
     "phpstan/phpstan": "^2.1",
