@@ -178,8 +178,6 @@ final class PacketEncoderTest extends TestCase
             ),
             'invalid_element',
         ];
-
-        /** @phpstan-ignore-next-line */
         $this->encoder->encodeBatch($packets);
     }
 
